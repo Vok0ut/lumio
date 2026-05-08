@@ -1,28 +1,7 @@
-import { auth } from "@/src/lib/auth";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import authConfig from "@/src/lib/auth.config";
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-
-  const isAuthRoute =
-    pathname.startsWith("/api/auth") || pathname === "/login";
-  const isApiRoute = pathname.startsWith("/api");
-  const isPublicRoute = pathname === "/";
-
-  if (isAuthRoute || isPublicRoute) {
-    return NextResponse.next();
-  }
-
-  if (!req.auth && isApiRoute) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
-
-  if (!req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  return NextResponse.next();
-});
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
   matcher: [
