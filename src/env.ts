@@ -8,12 +8,12 @@ export const env = createEnv({
     DATABASE_URL: z.string().min(1),
     NEXTAUTH_SECRET: z.string().min(32),
     NEXTAUTH_URL: z.string().min(1),
-    // Opcionales en desarrollo
-    GOOGLE_CLIENT_ID: isDev ? z.string().default("") : z.string().min(1),
-    GOOGLE_CLIENT_SECRET: isDev ? z.string().default("") : z.string().min(1),
-    RESEND_API_KEY: isDev ? z.string().default("") : z.string().min(1),
-    UPSTASH_REDIS_REST_URL: isDev ? z.string().default("") : z.string().min(1),
-    UPSTASH_REDIS_REST_TOKEN: isDev ? z.string().default("") : z.string().min(1),
+    // Opcionales (se configuran cuando se necesiten)
+    GOOGLE_CLIENT_ID: z.string().default(""),
+    GOOGLE_CLIENT_SECRET: z.string().default(""),
+    RESEND_API_KEY: z.string().default(""),
+    UPSTASH_REDIS_REST_URL: z.string().default(""),
+    UPSTASH_REDIS_REST_TOKEN: z.string().default(""),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
