@@ -1,0 +1,104 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+import { Sidebar } from "@/src/components/sidebar";
+import { MobileBottomNav } from "@/src/components/mobile-nav";
+import { Topbar } from "@/src/components/topbar";
+import { getLevelFromXP, getRankForLevel, NAV_ITEMS } from "@/src/lib/gamification";
+
+interface UserProfile {
+  totalXp: number;
+  name: string | null;
+  email: string;
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/user/me")
+        .then((r) => r.json())
+        .then(setProfile)
+        .catch(() => {});
+    }
+  }, [status]);
+
+  if (status === "loading") {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "var(--bg-base)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 800,
+              fontFamily: "var(--font-sans)",
+              color: "var(--text-hi)",
+              marginBottom: 8,
+            }}
+          >
+            lumio
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--text-lo)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            Cargando...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") return null;
+
+  const totalXp = profile?.totalXp ?? 0;
+  const { level, currentLevelXP, xpToNextLevel } = getLevelFromXP(totalXp);
+  const rank = getRankForLevel(level);
+  const xpProgress = xpToNextLevel > 0 ? currentLevelXP / xpToNextLevel : 0;
+
+  const currentSection = pathname.split("/").filter(Boolean)[0] ?? "dashboard";
+  const navItem = NAV_ITEMS.find((n) => n.key === currentSection);
+  const title = navItem?.label ?? "Lumio";
+
+  return (
+    <div className="home-root">
+      <Sidebar level={level} xpProgress={xpProgress} rankName={rank.name} />
+      <div className="main-area">
+        <Topbar
+          title={title}
+          level={level}
+          xpProgress={xpProgress}
+          totalXp={totalXp}
+        />
+        <div className="main-content" style={{ overflowY: "auto" }}>
+          {children}
+        </div>
+      </div>
+      <MobileBottomNav />
+    </div>
+  );
+}

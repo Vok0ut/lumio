@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\lib\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\components\\\\ui\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\hooks\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(auth\\)\\\\login\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\dashboard\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\habits\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\tasks\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\goals\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\journal\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\calendar\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\stats\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\achievements\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\profile\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\\\(app\\)\\\\pricing\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\auth\\\\send-otp\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\auth\\\\verify-otp\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\habits\\\\[id]\\\\log\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\tasks\\\\[id]\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\goals\\\\[id]\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\journal\\\\[id]\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\calendar\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\stats\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\user\\\\me\" \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\\\\src\\\\app\\\\api\\\\achievements\")",
+      "Bash(rm -rf node_modules package-lock.json)",
+      "Bash(npm install *)",
+      "Bash(SKIP_ENV_VALIDATION=true npx next build)",
+      "Bash(openssl rand *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__find",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__tabs_create_mcp",
+      "mcp__Claude_in_Chrome__tabs_close_mcp",
+      "Bash(npx next *)",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(set \"DATABASE_URL=postgresql://postgres.cnzhmtyqplbngtsvsuul:Lumi0_DB_2026%%21xKpQ9z@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true\")",
+      "Bash(npx prisma *)",
+      "Bash(npm run *)",
+      "Bash(timeout 10)",
+      "mcp__Claude_in_Chrome__read_console_messages",
+      "Bash(npx tsc *)",
+      "Bash(git init *)",
+      "Bash(git -C \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\" config user.name)",
+      "Bash(git -C \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\" config user.email)",
+      "Bash(git config *)",
+      "Bash(git -C \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\" config user.name \"enolp\")",
+      "Bash(git -C \"C:\\\\Users\\\\enolp\\\\Downloads\\\\lumio\" config user.email \"pozuecomenendezenol@gmail.com\")",
+      "Bash(git add *)"
+    ]
+  }
+}
