@@ -39,10 +39,10 @@ interface AchievementsApiResponse {
   rewards?: Reward[];
 }
 
-const TABS: { key: Tab; label: string }[] = [
+const TABS: { key: Tab; label: string; count?: number }[] = [
   { key: "tree", label: "Skill Tree" },
   { key: "badges", label: "Badges" },
-  { key: "rewards", label: "Recompensas" },
+  { key: "rewards", label: "Rewards" },
 ];
 
 const DEFAULT_BADGES: Badge[] = [
@@ -53,6 +53,8 @@ const DEFAULT_BADGES: Badge[] = [
   { id: "streak30", name: "Racha de 30 dias", description: "Completa 30 dias seguidos", unlocked: false },
   { id: "tasks50", name: "50 tareas", description: "Completa 50 tareas", unlocked: false },
 ];
+
+const BADGE_ICONS = ["★", "🔥", "◆", "⬡", "✦", "⚡"];
 
 function getSkillLevel(skills: SkillProgress[], nodeId: string): SkillProgress | null {
   return skills.find((s) => s.id === nodeId) ?? null;
@@ -72,98 +74,120 @@ function nodeBgOpacity(level: number): number {
   return 1;
 }
 
+/* ─── Starfield ─── */
+
+function Starfield() {
+  const stars = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 3}s`,
+    size: 1 + Math.random() * 1.5,
+  }));
+
+  return (
+    <div className="starfield">
+      {stars.map((s) => (
+        <span key={s.id} style={{
+          left: s.left, top: s.top,
+          animationDelay: s.delay,
+          width: s.size, height: s.size,
+        }} />
+      ))}
+    </div>
+  );
+}
+
 /* ─── Skill Tree SVG ─── */
 
 function SkillTreeView({
   skills,
   isMobile,
   onSelectNode,
+  selectedId,
 }: {
   skills: SkillProgress[];
   isMobile: boolean;
   onSelectNode: (node: SkillNode) => void;
+  selectedId: string | null;
 }) {
   const svgW = 600;
   const svgH = 500;
 
   return (
-    <svg
-      viewBox={`0 0 ${svgW} ${svgH}`}
-      style={{ width: "100%", maxWidth: isMobile ? "100%" : 600, height: "auto" }}
-    >
-      {/* Lines */}
-      {SKILL_TREE.filter((n) => n.parent).map((node) => {
-        const parent = SKILL_TREE.find((p) => p.id === node.parent)!;
-        return (
-          <line
-            key={`${node.parent}-${node.id}`}
-            x1={(parent.x / 100) * svgW}
-            y1={(parent.y / 100) * svgH}
-            x2={(node.x / 100) * svgW}
-            y2={(node.y / 100) * svgH}
-            stroke="var(--border-mid)"
-            strokeWidth="1.5"
-          />
-        );
-      })}
-
-      {/* Nodes */}
-      {SKILL_TREE.map((node) => {
-        const progress = getSkillLevel(skills, node.id);
-        const level = progress?.level ?? 0;
-        const cx = (node.x / 100) * svgW;
-        const cy = (node.y / 100) * svgH;
-        const r = isMobile ? 22 : 26;
-
-        return (
-          <g
-            key={node.id}
-            style={{ cursor: "pointer" }}
-            onClick={() => onSelectNode(node)}
-          >
-            <circle
-              cx={cx}
-              cy={cy}
-              r={r}
-              fill="var(--accent)"
-              opacity={nodeBgOpacity(level)}
-              stroke={nodeColor(level)}
+    <div style={{ position: "relative" }}>
+      <Starfield />
+      <svg
+        viewBox={`0 0 ${svgW} ${svgH}`}
+        className="tree-svg"
+        style={{ width: "100%", maxWidth: isMobile ? "100%" : 600, height: "auto" }}
+      >
+        {SKILL_TREE.filter((n) => n.parent).map((node) => {
+          const parent = SKILL_TREE.find((p) => p.id === node.parent)!;
+          return (
+            <line
+              key={`${node.parent}-${node.id}`}
+              x1={(parent.x / 100) * svgW}
+              y1={(parent.y / 100) * svgH}
+              x2={(node.x / 100) * svgW}
+              y2={(node.y / 100) * svgH}
+              stroke="var(--border-mid)"
               strokeWidth="1.5"
+              strokeDasharray="8 6"
+              className="edge-flow"
             />
-            <text
-              x={cx}
-              y={cy - 4}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={nodeColor(level)}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: isMobile ? 7 : 8,
-                fontWeight: 600,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
+          );
+        })}
+
+        {SKILL_TREE.map((node) => {
+          const progress = getSkillLevel(skills, node.id);
+          const level = progress?.level ?? 0;
+          const cx = (node.x / 100) * svgW;
+          const cy = (node.y / 100) * svgH;
+          const r = isMobile ? 22 : 26;
+          const isSelected = selectedId === node.id;
+
+          return (
+            <g
+              key={node.id}
+              className={`node ${level === 0 ? "locked" : ""} ${isSelected ? "sel" : ""}`}
+              style={{ cursor: "pointer" }}
+              onClick={() => onSelectNode(node)}
             >
-              {node.name}
-            </text>
-            <text
-              x={cx}
-              y={cy + 9}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={nodeColor(level)}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: isMobile ? 7 : 8,
-                opacity: 0.6,
-              }}
-            >
-              Lv.{level}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+              {level > 0 && level < 5 && (
+                <circle cx={cx} cy={cy} r={r + 6} fill="none"
+                  stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"
+                  className="avail-ring" />
+              )}
+              <circle
+                cx={cx} cy={cy} r={r}
+                fill="var(--accent)" opacity={nodeBgOpacity(level)}
+                stroke={nodeColor(level)} strokeWidth={isSelected ? 2 : 1.5}
+              />
+              <text
+                x={cx} y={cy - 4}
+                textAnchor="middle" dominantBaseline="middle"
+                fill={nodeColor(level)}
+                style={{
+                  fontFamily: "var(--font-mono)", fontSize: isMobile ? 7 : 8,
+                  fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
+                }}
+              >
+                {node.name}
+              </text>
+              <text
+                x={cx} y={cy + 9}
+                textAnchor="middle" dominantBaseline="middle"
+                fill={nodeColor(level)}
+                style={{ fontFamily: "var(--font-mono)", fontSize: isMobile ? 7 : 8, opacity: 0.6 }}
+              >
+                Lv.{level}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 
@@ -184,86 +208,47 @@ function NodeDetail({
   const xpNext = xpForLevel(level + 1);
 
   return (
-    <div
-      className="card"
-      style={{
-        padding: 20,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--text-hi)",
-          }}
-        >
-          {node.name}
-        </span>
-        <button
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--text-lo)",
-            cursor: "pointer",
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-          }}
-        >
-          Cerrar
-        </button>
+    <div className="skill-drawer open">
+      <div className="drawer-head">
+        <div>
+          <span className="t-label">{node.xpSource}</span>
+          <div className="drawer-title" style={{ fontFamily: "var(--font-sans)", color: "var(--text-hi)" }}>
+            {node.name}
+          </div>
+        </div>
+        <button className="drawer-close" onClick={onClose}>+</button>
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <span className="badge badge-white">Nivel {level}</span>
-        <span className="badge badge-dim">{node.xpSource}</span>
+      <div className="drawer-grid">
+        <div className="dg-item">
+          <span className="t-label">Nivel</span>
+          <div className="dg-val" style={{ fontFamily: "var(--font-sans)", color: "var(--text-hi)" }}>{level}</div>
+        </div>
+        <div className="dg-item">
+          <span className="t-label">XP</span>
+          <div className="dg-val" style={{ fontFamily: "var(--font-sans)", color: "var(--text-hi)" }}>{currentXp}</div>
+        </div>
       </div>
 
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span className="t-label">XP actual</span>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--text-mid)",
-            }}
-          >
+          <span className="t-label">Progreso</span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-mid)" }}>
             {currentXp} / {xpNext}
           </span>
         </div>
         <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${xpNext > 0 ? (currentXp / xpNext) * 100 : 0}%` }}
-          />
+          <div className="progress-fill" style={{ width: `${xpNext > 0 ? (currentXp / xpNext) * 100 : 0}%` }} />
         </div>
       </div>
 
-      <div
-        style={{
-          padding: 12,
-          borderRadius: "var(--radius-sm)",
-          background: "var(--bg-raised)",
-          border: "1px solid var(--border)",
-        }}
-      >
+      <div className="drawer-unlock">
         <span className="t-label">Recompensa en Lv.5</span>
-        <div
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 13,
-            fontWeight: 600,
-            color: level >= 5 ? "var(--accent)" : "var(--text-lo)",
-            marginTop: 4,
-          }}
-        >
-          {level >= 5 ? "Desbloqueado" : ""} {node.rewardLabel}
+        <div style={{
+          fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 600,
+          color: level >= 5 ? "var(--accent)" : "var(--text-lo)", marginTop: 6,
+        }}>
+          {level >= 5 ? "✓ " : ""}{node.rewardLabel}
         </div>
       </div>
     </div>
@@ -274,64 +259,27 @@ function NodeDetail({
 
 function BadgesView({ badges }: { badges: Badge[] }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-        gap: 12,
-      }}
-    >
-      {badges.map((b) => (
+    <div className="badge-board">
+      {badges.map((b, i) => (
         <TiltCard
           key={b.id}
-          style={{
-            padding: 16,
-            opacity: b.unlocked ? 1 : 0.45,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
+          className={`badge-card ${b.unlocked ? "got" : "pending"}`}
           max={12}
           scale={1.04}
         >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: b.unlocked ? "var(--accent)" : "var(--bg-raised)",
-              border: `1.5px solid ${b.unlocked ? "var(--accent)" : "var(--border-mid)"}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-            }}
-          >
-            {b.unlocked ? "★" : "?"}
+          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 6, minHeight: 130, alignItems: "flex-start" }}>
+            <div className="bc-icon">{b.unlocked ? BADGE_ICONS[i % BADGE_ICONS.length] : "?"}</div>
+            <span className="bc-name">{b.name}</span>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 11,
+              color: "var(--text-lo)", lineHeight: 1.5,
+            }}>
+              {b.description}
+            </span>
+            <span className={`badge ${b.unlocked ? "badge-white" : "badge-dim"}`} style={{ marginTop: "auto" }}>
+              {b.unlocked ? "Desbloqueado" : "Bloqueado"}
+            </span>
           </div>
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 13,
-              fontWeight: 600,
-              color: b.unlocked ? "var(--text-hi)" : "var(--text-lo)",
-            }}
-          >
-            {b.name}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              color: "var(--text-lo)",
-              lineHeight: 1.5,
-            }}
-          >
-            {b.description}
-          </span>
-          <span className={`badge ${b.unlocked ? "badge-white" : "badge-dim"}`}>
-            {b.unlocked ? "Desbloqueado" : "Bloqueado"}
-          </span>
         </TiltCard>
       ))}
     </div>
@@ -342,43 +290,21 @@ function BadgesView({ badges }: { badges: Badge[] }) {
 
 function RewardsView({ rewards }: { rewards: Reward[] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="rewards-list">
       {rewards.map((r) => (
-        <div
-          key={r.skillId}
-          className="card"
-          style={{
-            padding: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            opacity: r.unlocked ? 1 : 0.5,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: r.unlocked ? "var(--text-hi)" : "var(--text-lo)",
-              }}
-            >
-              {r.rewardLabel}
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                color: "var(--text-lo)",
-              }}
-            >
-              {r.skillName} &middot; Lv.5
+        <div key={r.skillId} className={`reward ${r.unlocked ? "owned" : ""}`}>
+          <div className="reward-icon">
+            {r.unlocked ? "★" : "?"}
+          </div>
+          <div>
+            <div className="reward-name">{r.rewardLabel || r.skillName}</div>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-lo)" }}>
+              {r.skillName} · Lv.5
             </span>
           </div>
-          <span className={`badge ${r.unlocked ? "badge-white" : "badge-dim"}`}>
-            {r.unlocked ? "Desbloqueado" : "Bloqueado"}
-          </span>
+          <button className={`reward-btn ${r.unlocked ? "" : "on"}`}>
+            {r.unlocked ? "Equipar" : "Bloqueado"}
+          </button>
         </div>
       ))}
     </div>
@@ -414,17 +340,13 @@ export default function AchievementsPage() {
     );
   }
 
-  // API returns { skillTree: [...], badges: [...] } — map to expected shapes
   const skillTreeData = data?.skillTree ?? [];
   const skills: SkillProgress[] = (data?.skills ?? skillTreeData).map((s) => ({
-    id: s.id,
-    level: s.level,
-    currentXp: s.currentXp,
+    id: s.id, level: s.level, currentXp: s.currentXp,
   }));
 
   const badges: Badge[] = (data?.badges ?? DEFAULT_BADGES).map((b) => ({
-    id: b.id,
-    name: b.name,
+    id: b.id, name: b.name,
     description: b.description ?? (b as { desc?: string }).desc ?? "",
     unlocked: b.unlocked,
   }));
@@ -433,78 +355,67 @@ export default function AchievementsPage() {
     data?.rewards ??
     (skillTreeData.length > 0
       ? skillTreeData.map((s) => ({
-          skillId: s.id,
-          skillName: s.name ?? s.id,
-          rewardLabel: s.rewardLabel ?? "",
-          unlocked: s.unlocked ?? false,
+          skillId: s.id, skillName: s.name ?? s.id,
+          rewardLabel: s.rewardLabel ?? "", unlocked: s.unlocked ?? false,
         }))
       : SKILL_TREE.map((n) => ({
-          skillId: n.id,
-          skillName: n.name,
-          rewardLabel: n.rewardLabel,
-          unlocked: false,
+          skillId: n.id, skillName: n.name,
+          rewardLabel: n.rewardLabel, unlocked: false,
         })));
+
+  const badgeCount = badges.filter((b) => b.unlocked).length;
+  const rewardCount = rewards.filter((r) => r.unlocked).length;
 
   return (
     <div className="section-inner">
-      {/* Tab bar */}
-      <div
-        style={{
-          display: "flex",
-          gap: 0,
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
+      {/* Header */}
+      <div className="skill-head">
+        <div>
+          <span className="t-label">Logros</span>
+          <h1 style={{ fontFamily: "var(--font-sans)", fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em", color: "var(--text-hi)", margin: "4px 0 0" }}>
+            Skill Tree
+          </h1>
+        </div>
+        <div className="skill-stats">
+          <span className="badge badge-white">{skills.length} skills</span>
+          <span className="badge badge-dim">{badgeCount} badges</span>
+        </div>
+      </div>
+
+      {/* Pill tabs */}
+      <div className="skill-tabs">
         {TABS.map((t) => (
           <button
             key={t.key}
-            onClick={() => {
-              setTab(t.key);
-              setSelectedNode(null);
-            }}
-            style={{
-              background: "none",
-              border: "none",
-              borderBottom: tab === t.key ? "2px solid var(--accent)" : "2px solid transparent",
-              padding: isMobile ? "10px 12px" : "10px 20px",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: tab === t.key ? "var(--text-hi)" : "var(--text-lo)",
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
+            className={`stab ${tab === t.key ? "on" : ""}`}
+            onClick={() => { setTab(t.key); setSelectedNode(null); }}
           >
             {t.label}
+            {t.key === "badges" && <span className="stab-count">{badgeCount}/{badges.length}</span>}
+            {t.key === "rewards" && <span className="stab-count">{rewardCount}</span>}
           </button>
         ))}
       </div>
 
       {/* Skill Tree tab */}
       {tab === "tree" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            gap: 16,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <SkillTreeView
-              skills={skills}
-              isMobile={isMobile}
-              onSelectNode={setSelectedNode}
-            />
-          </div>
-          {selectedNode && (
-            <div style={{ width: isMobile ? "100%" : 280, flexShrink: 0 }}>
-              <NodeDetail
-                node={selectedNode}
-                skills={skills}
-                onClose={() => setSelectedNode(null)}
-              />
+        <div className="skill-stage" style={isMobile ? { gridTemplateColumns: "1fr", minHeight: "auto" } : undefined}>
+          <SkillTreeView
+            skills={skills}
+            isMobile={isMobile}
+            onSelectNode={setSelectedNode}
+            selectedId={selectedNode?.id ?? null}
+          />
+          {selectedNode ? (
+            <NodeDetail node={selectedNode} skills={skills} onClose={() => setSelectedNode(null)} />
+          ) : (
+            <div className="skill-drawer">
+              <div className="drawer-empty">
+                <div className="de-orb" />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-lo)" }}>
+                  Selecciona un nodo
+                </span>
+              </div>
             </div>
           )}
         </div>

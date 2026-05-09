@@ -1,188 +1,419 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { signIn } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 
-function DotMatrix() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const CanvasRevealEffect = dynamic(
+  () => import("@/src/components/ui/canvas-reveal").then((m) => m.CanvasRevealEffect),
+  { ssr: false }
+);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    let animId: number;
-    const dots: { x: number; y: number; alpha: number; target: number }[] = [];
-    const SPACING = 28;
-    const BASE_ALPHA = 0.08;
+/* ─── Lumio Logo SVG ─── */
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      dots.length = 0;
-      for (let x = SPACING; x < canvas.width; x += SPACING) {
-        for (let y = SPACING; y < canvas.height; y += SPACING) {
-          dots.push({ x, y, alpha: BASE_ALPHA, target: BASE_ALPHA });
-        }
-      }
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    let mx = canvas.width / 2;
-    let my = canvas.height / 2;
-    const onMove = (e: MouseEvent) => {
-      mx = e.clientX;
-      my = e.clientY;
-    };
-    window.addEventListener("mousemove", onMove);
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const d of dots) {
-        const dist = Math.hypot(d.x - mx, d.y - my);
-        d.target = dist < 180 ? BASE_ALPHA + (1 - dist / 180) * 0.35 : BASE_ALPHA;
-        d.alpha += (d.target - d.alpha) * 0.08;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, 1.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232,230,223,${d.alpha})`;
-        ctx.fill();
-      }
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", onMove);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="login-dots-canvas" />;
+function LumioLogo({ size = 40 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="44" stroke="rgba(232,230,223,0.9)" strokeWidth="3" fill="none" />
+      {/* center dot */}
+      <circle cx="50" cy="50" r="4" fill="rgba(232,230,223,0.9)" />
+      {/* spokes — 6 lines radiating from center */}
+      {[0, 60, 120, 180, 240, 300].map((angle) => {
+        const rad = (angle * Math.PI) / 180;
+        const x2 = 50 + Math.cos(rad) * 28;
+        const y2 = 50 + Math.sin(rad) * 28;
+        return (
+          <line
+            key={angle}
+            x1="50" y1="50" x2={x2} y2={y2}
+            stroke="rgba(232,230,223,0.9)" strokeWidth="3" strokeLinecap="round"
+          />
+        );
+      })}
+      {/* top extra accent — the upward petal */}
+      <line x1="50" y1="50" x2="50" y2="14" stroke="rgba(232,230,223,0.9)" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
 }
 
+/* ─── Nav ─── */
+
+function LoginNav({ onGoogleSignIn }: { onGoogleSignIn: () => void }) {
+  return (
+    <nav className="login-nav">
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <LumioLogo size={24} />
+        <span className="login-nav-logo">lumio</span>
+      </div>
+      <div className="login-nav-links">
+        <span className="login-nav-link">Producto</span>
+        <span className="login-nav-link">Pricing</span>
+      </div>
+      <button className="login-nav-btn" onClick={onGoogleSignIn}>
+        Entrar con Google
+      </button>
+    </nav>
+  );
+}
+
+/* ─── Main Login Page ─── */
+
+type Step = "email" | "code" | "success";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [exiting, setExiting] = useState(false);
+  const [step, setStep] = useState<Step>("email");
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
+  const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
+
+  const handleGoogleSignIn = useCallback(() => {
+    signIn("google", { callbackUrl: "/dashboard" });
+  }, []);
+
+  /* ── Email step ── */
+  const handleEmailSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) return;
     setError("");
     setLoading(true);
 
     try {
-      setExiting(true);
-      const result = await signIn("credentials", {
-        email,
-        redirect: false,
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-
-      if (result?.error) {
-        setExiting(false);
-        throw new Error("Error al iniciar sesion");
-      }
-
-      window.location.href = "/dashboard";
+      if (!res.ok) throw new Error("Error al enviar el codigo");
+      setStep("code");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
+    } finally {
       setLoading(false);
     }
-  };
+  }, [email]);
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
-  };
+  /* Focus first code input when entering code step */
+  useEffect(() => {
+    if (step === "code") {
+      setTimeout(() => codeRefs.current[0]?.focus(), 400);
+    }
+  }, [step]);
+
+  /* ── Verify OTP ── */
+  const handleCodeComplete = useCallback(async (fullCode: string) => {
+    setReverseCanvasVisible(true);
+    setTimeout(() => setInitialCanvasVisible(false), 50);
+
+    try {
+      const verifyRes = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: fullCode }),
+      });
+      if (!verifyRes.ok) throw new Error("Codigo incorrecto");
+
+      const result = await signIn("credentials", { email, redirect: false });
+      if (result?.error) throw new Error("Error al iniciar sesion");
+
+      setTimeout(() => setStep("success"), 1800);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado");
+      setReverseCanvasVisible(false);
+      setInitialCanvasVisible(true);
+    }
+  }, [email]);
+
+  /* ── Code input handling ── */
+  const handleCodeChange = useCallback((index: number, value: string) => {
+    if (value.length > 1) return;
+    const next = [...code];
+    next[index] = value;
+    setCode(next);
+
+    if (value && index < 5) {
+      codeRefs.current[index + 1]?.focus();
+    }
+
+    if (index === 5 && value) {
+      const full = next.every((d) => d.length === 1);
+      if (full) {
+        handleCodeComplete(next.join(""));
+      }
+    }
+  }, [code, handleCodeComplete]);
+
+  const handleCodeKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      codeRefs.current[index - 1]?.focus();
+    }
+  }, [code]);
+
+  const handleBack = useCallback(() => {
+    setStep("email");
+    setCode(["", "", "", "", "", ""]);
+    setError("");
+    setReverseCanvasVisible(false);
+    setInitialCanvasVisible(true);
+  }, []);
 
   return (
-    <div className={`login-root ${exiting ? "screen-transition" : ""}`}>
-      <DotMatrix />
-      <div className="login-vignette" />
-      <div className="login-vignette-top" />
-
-      <nav className="login-nav">
-        <span className="login-nav-logo">lumio</span>
-        <div className="login-nav-links">
-          <span className="login-nav-link">Producto</span>
-          <span className="login-nav-link">Pricing</span>
-        </div>
-        <button className="login-nav-btn" onClick={handleGoogleSignIn}>
-          Entrar con Google
-        </button>
-      </nav>
-
-      <div className="login-form-wrap">
-        <h1 className="login-heading">Bienvenido</h1>
-        <p className="login-subheading">
-          Tu sistema de productividad te espera
-        </p>
-
-        {error && (
-          <div
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: "var(--radius-sm)",
-              background: "rgba(244,67,54,0.15)",
-              border: "1px solid rgba(244,67,54,0.3)",
-              color: "#EF9A9A",
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              marginBottom: 16,
-              textAlign: "center",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleEmailLogin} style={{ width: "100%" }}>
-          <div className="login-input-row">
-            <input
-              className="login-input"
-              type="email"
-              placeholder="tu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
+    <div className="login-root">
+      {/* Three.js dot matrix background */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        {initialCanvasVisible && (
+          <div style={{ position: "absolute", inset: 0 }}>
+            <CanvasRevealEffect
+              animationSpeed={3}
+              colors={[[232, 230, 223], [200, 198, 190]]}
+              dotSize={6}
+              reverse={false}
             />
           </div>
-
-          <div className="login-btn-row">
-            <button
-              type="submit"
-              className={`login-btn ${loading ? "login-btn-disabled" : "login-btn-white"}`}
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Continuar con email"}
-            </button>
+        )}
+        {reverseCanvasVisible && (
+          <div style={{ position: "absolute", inset: 0 }}>
+            <CanvasRevealEffect
+              animationSpeed={4}
+              colors={[[232, 230, 223], [200, 198, 190]]}
+              dotSize={6}
+              reverse={true}
+            />
           </div>
+        )}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "radial-gradient(circle at center, rgba(9,9,9,1) 0%, transparent 100%)",
+        }} />
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "33%",
+          background: "linear-gradient(to bottom, #090909, transparent)",
+        }} />
+      </div>
 
-          <div className="login-divider">
-            <div className="login-divider-line" />
-            <span className="login-divider-text">O</span>
-            <div className="login-divider-line" />
-          </div>
+      {/* Content */}
+      <div style={{ position: "relative", zIndex: 5, display: "flex", flexDirection: "column", flex: 1, width: "100%" }}>
+        <LoginNav onGoogleSignIn={handleGoogleSignIn} />
 
-          <div className="login-btn-row">
-            <button
-              type="button"
-              className="login-btn login-btn-outline"
-              onClick={handleGoogleSignIn}
-            >
-              Continuar con Google
-            </button>
-          </div>
-        </form>
+        <div className="login-form-wrap">
+          <AnimatePresence mode="wait">
+            {/* ── Email Step ── */}
+            {step === "email" && (
+              <motion.div
+                key="email-step"
+                initial={{ opacity: 0, x: -80 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -80 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                <div style={{ marginBottom: 32 }}>
+                  <LumioLogo size={48} />
+                </div>
 
-        <p className="login-legal">
-          Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
-          <a href="#">Politica de privacidad</a>
-        </p>
+                <h1 className="login-heading">Bienvenido</h1>
+                <p className="login-subheading">Tu sistema de productividad te espera</p>
+
+                {error && (
+                  <div className="login-error">{error}</div>
+                )}
+
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
+                  <button
+                    type="button"
+                    className="login-btn login-btn-outline"
+                    onClick={handleGoogleSignIn}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+                  >
+                    <span style={{ fontSize: 16, fontWeight: 700 }}>G</span>
+                    Continuar con Google
+                  </button>
+
+                  <div className="login-divider">
+                    <div className="login-divider-line" />
+                    <span className="login-divider-text">O</span>
+                    <div className="login-divider-line" />
+                  </div>
+
+                  <form onSubmit={handleEmailSubmit} style={{ width: "100%" }}>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        className="login-input"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                        style={{ textAlign: "center", paddingRight: 48 }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="login-submit-arrow"
+                      >
+                        <span className="login-arrow-inner">
+                          <span className="login-arrow-default">→</span>
+                          <span className="login-arrow-hover">→</span>
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <p className="login-legal">
+                  Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
+                  <a href="#">Politica de privacidad</a>
+                </p>
+              </motion.div>
+            )}
+
+            {/* ── Code Step ── */}
+            {step === "code" && (
+              <motion.div
+                key="code-step"
+                initial={{ opacity: 0, x: 80 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 80 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                <h1 className="login-heading">Te enviamos un codigo</h1>
+                <p className="login-subheading">Ingresalo aqui</p>
+
+                {error && (
+                  <div className="login-error">{error}</div>
+                )}
+
+                <div className="login-code-wrap">
+                  <div className="login-code-inner">
+                    {code.map((digit, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                        <div style={{ position: "relative" }}>
+                          <input
+                            ref={(el) => { codeRefs.current[i] = el; }}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleCodeChange(i, e.target.value)}
+                            onKeyDown={(e) => handleCodeKeyDown(i, e)}
+                            className="login-code-input"
+                            style={{ caretColor: "transparent" }}
+                          />
+                          {!digit && (
+                            <div className="login-code-placeholder">0</div>
+                          )}
+                        </div>
+                        {i < 5 && (
+                          <span style={{ color: "rgba(255,255,255,0.15)", fontSize: 20, margin: "0 2px" }}>|</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetch("/api/auth/send-otp", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email }),
+                    });
+                  }}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    fontFamily: "var(--font-mono)", fontSize: 12,
+                    color: "var(--text-lo)", marginTop: 16,
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-mid)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-lo)")}
+                >
+                  Reenviar codigo
+                </button>
+
+                <div style={{ display: "flex", gap: 10, width: "100%", marginTop: 24 }}>
+                  <button
+                    type="button"
+                    className="login-btn login-btn-white"
+                    onClick={handleBack}
+                    style={{ flex: "0 0 30%" }}
+                  >
+                    Atras
+                  </button>
+                  <button
+                    type="button"
+                    className={`login-btn ${code.every((d) => d !== "") ? "login-btn-white" : "login-btn-disabled"}`}
+                    disabled={!code.every((d) => d !== "")}
+                    onClick={() => handleCodeComplete(code.join(""))}
+                    style={{ flex: 1 }}
+                  >
+                    Continuar
+                  </button>
+                </div>
+
+                <p className="login-legal">
+                  Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
+                  <a href="#">Politica de privacidad</a>
+                </p>
+              </motion.div>
+            )}
+
+            {/* ── Success Step ── */}
+            {step === "success" && (
+              <motion.div
+                key="success-step"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 }}
+                style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                <h1 className="login-heading">Bienvenido</h1>
+                <p className="login-subheading">Tu espacio esta listo</p>
+
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  style={{ padding: "40px 0" }}
+                >
+                  <div style={{
+                    width: 64, height: 64, borderRadius: "50%",
+                    background: "linear-gradient(135deg, var(--accent), rgba(232,230,223,0.7))",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor" style={{ color: "#090909" }}>
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  style={{ width: "100%" }}
+                >
+                  <button
+                    className="login-btn login-btn-white"
+                    onClick={() => { window.location.href = "/dashboard"; }}
+                    style={{ width: "100%" }}
+                  >
+                    Ir al Dashboard
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
