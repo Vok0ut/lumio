@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Modal } from "@/src/components/ui/modal";
 import { Icon } from "@/src/components/ui/icons";
 import { HABIT_CATEGORIES, type HabitCategory } from "@/src/lib/gamification";
+import { TiltCard } from "@/src/components/ui/tilt-card";
 
 /* ── types ─────────────────────────────────────── */
 
@@ -252,10 +253,11 @@ export default function HabitsPage() {
           {habits.map((h) => {
             const history = buildHistory(h.completedDates ?? []);
             return (
-              <div
-                className="card"
+              <TiltCard
                 key={h.id}
                 style={{ padding: "16px 20px" }}
+                max={6}
+                scale={1.01}
               >
                 {/* top row: check, name, category, delete */}
                 <div
@@ -367,7 +369,7 @@ export default function HabitsPage() {
                 <div style={{ marginTop: 12, paddingLeft: 28 }}>
                   <MicroHistory history={history} />
                 </div>
-              </div>
+              </TiltCard>
             );
           })}
         </div>

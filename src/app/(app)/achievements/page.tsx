@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SKILL_TREE, type SkillNode, xpForLevel } from "@/src/lib/gamification";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { TiltCard } from "@/src/components/ui/tilt-card";
 
 type Tab = "tree" | "badges" | "rewards";
 
@@ -281,9 +282,8 @@ function BadgesView({ badges }: { badges: Badge[] }) {
       }}
     >
       {badges.map((b) => (
-        <div
+        <TiltCard
           key={b.id}
-          className="card"
           style={{
             padding: 16,
             opacity: b.unlocked ? 1 : 0.45,
@@ -291,6 +291,8 @@ function BadgesView({ badges }: { badges: Badge[] }) {
             flexDirection: "column",
             gap: 8,
           }}
+          max={12}
+          scale={1.04}
         >
           <div
             style={{
@@ -330,7 +332,7 @@ function BadgesView({ badges }: { badges: Badge[] }) {
           <span className={`badge ${b.unlocked ? "badge-white" : "badge-dim"}`}>
             {b.unlocked ? "Desbloqueado" : "Bloqueado"}
           </span>
-        </div>
+        </TiltCard>
       ))}
     </div>
   );

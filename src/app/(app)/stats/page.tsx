@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SparkLine, MiniBar } from "@/src/components/ui/sparkline";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { TiltCard } from "@/src/components/ui/tilt-card";
 
 interface StatsData {
   habitRate: number;
@@ -108,10 +109,11 @@ export default function StatsPage() {
         }}
       >
         {kpis.map((kpi) => (
-          <div
+          <TiltCard
             key={kpi.label}
-            className="card"
             style={{ padding: isMobile ? 14 : 18 }}
+            max={10}
+            scale={1.03}
           >
             <span className="t-label">{kpi.label}</span>
             <div
@@ -135,7 +137,7 @@ export default function StatsPage() {
               </span>
               <SparkLine data={kpi.sparkData} width={isMobile ? 56 : 80} height={22} />
             </div>
-          </div>
+          </TiltCard>
         ))}
       </div>
 
@@ -148,7 +150,7 @@ export default function StatsPage() {
         }}
       >
         {/* Habits per day */}
-        <div className="card" style={{ padding: isMobile ? 14 : 20 }}>
+        <TiltCard style={{ padding: isMobile ? 14 : 20 }} max={5} scale={1.01}>
           <span className="t-label">Habitos / dia</span>
           <div
             style={{
@@ -187,10 +189,10 @@ export default function StatsPage() {
               </span>
             ))}
           </div>
-        </div>
+        </TiltCard>
 
         {/* XP per day */}
-        <div className="card" style={{ padding: isMobile ? 14 : 20 }}>
+        <TiltCard style={{ padding: isMobile ? 14 : 20 }} max={5} scale={1.01}>
           <span className="t-label">XP / dia</span>
           <div
             style={{
@@ -229,11 +231,11 @@ export default function StatsPage() {
               </span>
             ))}
           </div>
-        </div>
+        </TiltCard>
       </div>
 
       {/* Monthly activity heatmap */}
-      <div className="card" style={{ padding: isMobile ? 14 : 20 }}>
+      <TiltCard style={{ padding: isMobile ? 14 : 20 }} max={4} scale={1.01}>
         <span className="t-label">Actividad mensual</span>
         <div
           style={{
@@ -301,7 +303,7 @@ export default function StatsPage() {
             Mas
           </span>
         </div>
-      </div>
+      </TiltCard>
     </div>
   );
 }

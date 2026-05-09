@@ -6,6 +6,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/src/components/sidebar";
 import { MobileBottomNav } from "@/src/components/mobile-nav";
 import { Topbar } from "@/src/components/topbar";
+import { CustomCursor } from "@/src/components/ui/custom-cursor";
+import { PageTransition } from "@/src/components/ui/page-transition";
 import { getLevelFromXP, getRankForLevel, NAV_ITEMS } from "@/src/lib/gamification";
 
 interface UserProfile {
@@ -86,6 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="home-root">
+      <CustomCursor />
       <Sidebar level={level} xpProgress={xpProgress} rankName={rank.name} />
       <div className="main-area">
         <Topbar
@@ -95,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           totalXp={totalXp}
         />
         <div className="main-content" style={{ overflowY: "auto" }}>
-          {children}
+          <PageTransition>{children}</PageTransition>
         </div>
       </div>
       <MobileBottomNav />

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 import { SparkLine } from "@/src/components/ui/sparkline";
+import { TiltCard } from "@/src/components/ui/tilt-card";
 
 
 /* ── types ─────────────────────────────────────── */
@@ -218,7 +219,7 @@ export default function DashboardPage() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 12 }}>
           {kpis.map((kpi) => (
-            <div className="card" key={kpi.label} style={{ padding: 20 }}>
+            <TiltCard key={kpi.label} style={{ padding: 20 }} max={10} scale={1.03}>
               <span className="t-label">{kpi.label}</span>
               <div
                 style={{
@@ -244,7 +245,7 @@ export default function DashboardPage() {
                   <SparkLine data={kpi.sparkData} width={64} height={20} />
                 )}
               </div>
-            </div>
+            </TiltCard>
           ))}
         </div>
       )}
@@ -258,7 +259,7 @@ export default function DashboardPage() {
         }}
       >
         {/* Today's Habits */}
-        <div className="card" style={{ padding: 20 }}>
+        <TiltCard style={{ padding: 20 }} max={5} scale={1.01}>
           <div
             style={{
               display: "flex",
@@ -329,10 +330,10 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </div>
+        </TiltCard>
 
         {/* Pending Tasks */}
-        <div className="card" style={{ padding: 20 }}>
+        <TiltCard style={{ padding: 20 }} max={5} scale={1.01}>
           <div
             style={{
               display: "flex",
@@ -409,7 +410,7 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </div>
+        </TiltCard>
       </div>
 
       {/* ── Goals / Missions ── */}
@@ -458,7 +459,7 @@ export default function DashboardPage() {
             }}
           >
             {goals.map((g) => (
-              <div className="card" key={g.id} style={{ padding: 18 }}>
+              <TiltCard key={g.id} style={{ padding: 18 }}>
                 <div
                   style={{
                     display: "flex",
@@ -496,7 +497,7 @@ export default function DashboardPage() {
                 >
                   {g.progress}% completado
                 </span>
-              </div>
+              </TiltCard>
             ))}
           </div>
         )}
