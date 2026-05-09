@@ -1,7 +1,10 @@
 import { Redis } from "@upstash/redis";
+import { randomBytes, timingSafeEqual } from "crypto";
 
 const OTP_TTL_SECONDS = 600; // 10 minutes
+const VERIFY_TOKEN_TTL = 120; // 2 minutes — short window to call signIn
 const OTP_PREFIX = "otp:";
+const VERIFY_PREFIX = "verified:";
 
 let _redis: Redis | null = null;
 
@@ -26,16 +29,44 @@ export async function storeOtp(email: string, code: string): Promise<boolean> {
   return true;
 }
 
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 export async function verifyOtp(
   email: string,
   code: string
-): Promise<boolean> {
+): Promise<string | null> {
   const redis = getRedis();
-  if (!redis) return true; // dev fallback: accept any code
+
+  if (!redis) {
+    const token = randomBytes(32).toString("hex");
+    return token; // dev fallback
+  }
 
   const stored = await redis.get<string>(`${OTP_PREFIX}${email}`);
-  if (!stored || stored !== code) return false;
+  if (!stored || !safeEqual(stored, code)) return null;
 
   await redis.del(`${OTP_PREFIX}${email}`);
+
+  // Issue a short-lived verification token
+  const token = randomBytes(32).toString("hex");
+  await redis.set(`${VERIFY_PREFIX}${email}`, token, { ex: VERIFY_TOKEN_TTL });
+
+  return token;
+}
+
+export async function consumeVerifyToken(
+  email: string,
+  token: string
+): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return true; // dev fallback
+
+  const stored = await redis.get<string>(`${VERIFY_PREFIX}${email}`);
+  if (!stored || !safeEqual(stored, token)) return false;
+
+  await redis.del(`${VERIFY_PREFIX}${email}`);
   return true;
 }

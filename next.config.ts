@@ -17,6 +17,9 @@ const securityHeaders = [
       "img-src 'self' data: https:",
       "connect-src 'self'",
       "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
     ].join("; "),
   },
 ];

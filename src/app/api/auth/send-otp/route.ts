@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { email } = parsed.data;
-  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const ip =
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
 
   const [ipLimit, emailLimit] = await Promise.all([
     (await getOtpByIp()).limit(ip),

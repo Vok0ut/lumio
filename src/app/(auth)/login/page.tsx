@@ -118,7 +118,9 @@ export default function LoginPage() {
       });
       if (!verifyRes.ok) throw new Error("Codigo incorrecto");
 
-      const result = await signIn("credentials", { email, redirect: false });
+      const { token } = await verifyRes.json();
+
+      const result = await signIn("credentials", { email, token, redirect: false });
       if (result?.error) throw new Error("Error al iniciar sesion");
 
       setTimeout(() => setStep("success"), 1800);
