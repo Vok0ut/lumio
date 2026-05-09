@@ -10,6 +10,8 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: z.string().default(""),
     GOOGLE_CLIENT_SECRET: z.string().default(""),
     RESEND_API_KEY: z.string().default(""),
+    GMAIL_USER: z.string().default(""),
+    GMAIL_APP_PASSWORD: z.string().default(""),
     UPSTASH_REDIS_REST_URL: z.string().default(""),
     UPSTASH_REDIS_REST_TOKEN: z.string().default(""),
     NODE_ENV: z
@@ -24,6 +26,8 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
     RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+    GMAIL_USER: process.env.GMAIL_USER ?? "",
+    GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD ?? "",
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL ?? "",
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN ?? "",
     NODE_ENV: process.env.NODE_ENV,

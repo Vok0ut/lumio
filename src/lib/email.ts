@@ -1,25 +1,32 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-let _resend: Resend | null = null;
+let _transporter: nodemailer.Transporter | null = null;
 
-function getResend(): Resend | null {
-  if (_resend) return _resend;
-  const key = process.env.RESEND_API_KEY;
-  if (!key || key === "re_tu_api_key") return null;
-  _resend = new Resend(key);
-  return _resend;
+function getTransporter(): nodemailer.Transporter | null {
+  if (_transporter) return _transporter;
+
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) return null;
+
+  _transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
+
+  return _transporter;
 }
 
 export async function sendOtpEmail(email: string, code: string) {
-  const resend = getResend();
+  const transporter = getTransporter();
 
-  if (!resend) {
+  if (!transporter) {
     console.log(`[EMAIL-DEV] To: ${email} | Code: ${code}`);
     return;
   }
 
-  await resend.emails.send({
-    from: "Lumio <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `Lumio <${process.env.GMAIL_USER}>`,
     to: email,
     subject: `${code} — Tu codigo de acceso a Lumio`,
     html: otpTemplate(code),
