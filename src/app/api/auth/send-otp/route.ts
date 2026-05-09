@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomInt } from "crypto";
 import { SendOtpSchema } from "@/src/lib/validations";
+import { storeOtp } from "@/src/lib/otp";
+import { sendOtpEmail } from "@/src/lib/email";
+import { getOtpByIp, getOtpByEmail } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -12,11 +15,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const otp = String(randomInt(100000, 999999));
+  const { email } = parsed.data;
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
 
-  // In production: store OTP in Redis with 10-min TTL and send via Resend
-  // For development: log OTP to console
-  console.log(`[OTP] ${parsed.data.email}: ${otp}`);
+  const [ipLimit, emailLimit] = await Promise.all([
+    (await getOtpByIp()).limit(ip),
+    (await getOtpByEmail()).limit(email),
+  ]);
+
+  if (!ipLimit.success || !emailLimit.success) {
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera unos minutos." },
+      { status: 429 }
+    );
+  }
+
+  const code = String(randomInt(100000, 999999));
+
+  await storeOtp(email, code);
+  await sendOtpEmail(email, code);
 
   return NextResponse.json({ ok: true });
 }
