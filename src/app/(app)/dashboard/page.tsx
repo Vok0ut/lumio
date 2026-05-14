@@ -259,7 +259,7 @@ export default function DashboardPage() {
         }}
       >
         {/* Today's Habits */}
-        <TiltCard style={{ padding: 20 }} max={5} scale={1.01}>
+        <TiltCard style={{ padding: 20 }} max={3} scale={1.005}>
           <div
             style={{
               display: "flex",
@@ -333,7 +333,7 @@ export default function DashboardPage() {
         </TiltCard>
 
         {/* Pending Tasks */}
-        <TiltCard style={{ padding: 20 }} max={5} scale={1.01}>
+        <TiltCard style={{ padding: 20 }} max={3} scale={1.005}>
           <div
             style={{
               display: "flex",

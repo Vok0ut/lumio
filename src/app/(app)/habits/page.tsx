@@ -256,8 +256,8 @@ export default function HabitsPage() {
               <TiltCard
                 key={h.id}
                 style={{ padding: "16px 20px" }}
-                max={6}
-                scale={1.01}
+                max={3}
+                scale={1.005}
               >
                 {/* top row: check, name, category, delete */}
                 <div

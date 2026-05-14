@@ -11,7 +11,7 @@ interface TiltCardProps {
   scale?: number;
 }
 
-export function TiltCard({ children, className = "", style, max = 8, scale = 1.02 }: TiltCardProps) {
+export function TiltCard({ children, className = "", style, max = 4, scale = 1.01 }: TiltCardProps) {
   const isMobile = useIsMobile();
   const { ref, tiltStyle, onMouseMove, onMouseLeave } = useTilt({ max, scale });
 
