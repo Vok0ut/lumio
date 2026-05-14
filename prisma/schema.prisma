@@ -8,11 +8,17 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Plan {
+  FREE
+  PREMIUM
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
   image     String?
+  plan      Plan     @default(FREE)
   totalXp   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -25,6 +31,14 @@ model User {
   journals JournalEntry[]
   events   CalendarEvent[]
   xpLogs   XpLog[]
+}
+
+model DevCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  usedBy    String?  // email del usuario que lo canjeó
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 }
 
 model Account {

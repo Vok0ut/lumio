@@ -127,7 +127,7 @@ export default function HabitsPage() {
   /* ── toggle today ── */
   const toggleToday = useCallback(
     (id: string, current: boolean) => {
-      if (!habits) return;
+      if (!habits || current) return;
       setHabits((prev) =>
         prev
           ? prev.map((h) =>
@@ -271,6 +271,7 @@ export default function HabitsPage() {
                     className={`check ${h.completedToday ? "checked" : ""}`}
                     onClick={() => toggleToday(h.id, h.completedToday)}
                     aria-label={`Marcar ${h.name}`}
+                    style={h.completedToday ? { cursor: "default", opacity: 0.7 } : undefined}
                   >
                     {h.completedToday ? "✓" : ""}
                   </button>

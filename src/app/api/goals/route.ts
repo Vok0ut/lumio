@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, isPremium, premiumRequired } from "@/src/lib/api-utils";
 import { CreateGoalSchema } from "@/src/lib/validations";
 
 export async function GET() {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  if (!(await isPremium(userId))) return premiumRequired();
 
   const goals = await prisma.goal.findMany({
     where: { userId },

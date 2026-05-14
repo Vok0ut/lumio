@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Modal } from "@/src/components/ui/modal";
 import { Icon } from "@/src/components/ui/icons";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { usePlan } from "@/src/hooks/use-plan";
+import { PremiumWall } from "@/src/components/ui/premium-wall";
 
 /* ── Types ─────────────────────────────────── */
 
@@ -28,7 +30,7 @@ interface Goal {
 
 export default function GoalsPage() {
   const isMobile = useIsMobile();
-
+  const { isPremium, loading: planLoading } = usePlan();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -313,6 +315,10 @@ export default function GoalsPage() {
   };
 
   /* ── Main render ───────────────────────────── */
+
+  if (!planLoading && !isPremium) {
+    return <PremiumWall feature="Metas" />;
+  }
 
   return (
     <div className="section-inner">

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { signOut } from "next-auth/react";
 import { XPRing } from "@/src/components/ui/xp-ring";
 import { Icon } from "@/src/components/ui/icons";
+import { Modal } from "@/src/components/ui/modal";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 
 interface RankInfo {
@@ -27,6 +28,8 @@ interface XpLog {
 interface UserProfile {
   email: string;
   name: string | null;
+  image: string | null;
+  plan: "FREE" | "PREMIUM";
   totalXp: number;
   level: number;
   currentLevelXP: number;
@@ -78,10 +81,53 @@ function formatTimestamp(dateStr: string): string {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
+/** Resize image to max 256x256 and return base64 data URL */
+function resizeImage(file: File, maxSize = 256): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let w = img.width;
+        let h = img.height;
+        if (w > h) {
+          if (w > maxSize) { h = (h * maxSize) / w; w = maxSize; }
+        } else {
+          if (h > maxSize) { w = (w * maxSize) / h; h = maxSize; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("No canvas context"));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/webp", 0.8));
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ProfilePage() {
   const isMobile = useIsMobile();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  /* edit modal state */
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editImage, setEditImage] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /* dev code state */
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [devCode, setDevCode] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [redeemingCode, setRedeemingCode] = useState(false);
 
   useEffect(() => {
     fetch("/api/user/me")
@@ -92,6 +138,71 @@ export default function ProfilePage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const openEdit = useCallback(() => {
+    if (!profile) return;
+    setEditName(profile.name ?? "");
+    setEditImage(profile.image ?? null);
+    setEditOpen(true);
+  }, [profile]);
+
+  const handleImagePick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImage(file);
+      setEditImage(dataUrl);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const redeemCode = useCallback(async () => {
+    if (!devCode.trim()) return;
+    setCodeError("");
+    setRedeemingCode(true);
+    try {
+      const res = await fetch("/api/user/redeem-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: devCode.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCodeError(data.error || "Error al canjear el codigo");
+        return;
+      }
+      setProfile((prev) => prev ? { ...prev, plan: "PREMIUM" } : prev);
+      setCodeOpen(false);
+      setDevCode("");
+    } catch {
+      setCodeError("Error de conexion");
+    } finally {
+      setRedeemingCode(false);
+    }
+  }, [devCode]);
+
+  const saveProfile = useCallback(async () => {
+    if (!profile) return;
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/user/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim() || undefined,
+          image: editImage ?? undefined,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setProfile((prev) => prev ? { ...prev, name: updated.name, image: updated.image } : prev);
+        setEditOpen(false);
+      }
+    } finally {
+      setSavingProfile(false);
+    }
+  }, [profile, editName, editImage]);
 
   if (loading) {
     return (
@@ -125,7 +236,7 @@ export default function ProfilePage() {
 
   return (
     <div className="section-inner">
-      {/* Header with XP Ring */}
+      {/* Header with Avatar & XP Ring */}
       <div
         style={{
           display: "flex",
@@ -135,7 +246,46 @@ export default function ProfilePage() {
           paddingBottom: 8,
         }}
       >
-        <XPRing level={profile.level} progress={xpProgress} size={80} />
+        {/* Avatar */}
+        <div style={{ position: "relative" }}>
+          {profile.image ? (
+            <img
+              src={profile.image}
+              alt="Avatar"
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid var(--border)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.08)",
+                border: "2px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="user" size={32} color="var(--text-lo)" />
+            </div>
+          )}
+          <div
+            style={{
+              position: "absolute",
+              bottom: -4,
+              right: -4,
+            }}
+          >
+            <XPRing level={profile.level} progress={xpProgress} size={36} />
+          </div>
+        </div>
 
         <div style={{ textAlign: "center" }}>
           <div
@@ -159,11 +309,43 @@ export default function ProfilePage() {
           >
             {profile.email}
           </div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
             <span className="badge badge-white">{profile.rank.name}</span>
+            <span
+              className="badge"
+              style={{
+                background: profile.plan === "PREMIUM"
+                  ? "rgba(255,215,0,0.15)"
+                  : "rgba(255,255,255,0.05)",
+                color: profile.plan === "PREMIUM" ? "#FFD700" : "var(--text-lo)",
+                border: profile.plan === "PREMIUM" ? "1px solid rgba(255,215,0,0.3)" : "1px solid var(--border)",
+              }}
+            >
+              {profile.plan === "PREMIUM" ? "Premium" : "Free"}
+            </span>
             <span className="badge badge-dim">
               Miembro desde {formatDate(profile.createdAt)}
             </span>
+          </div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ fontSize: 11 }}
+              onClick={openEdit}
+            >
+              <Icon name="edit" size={12} />
+              Editar perfil
+            </button>
+            {profile.plan !== "PREMIUM" && (
+              <button
+                className="btn btn-ghost"
+                style={{ fontSize: 11 }}
+                onClick={() => { setCodeOpen(true); setCodeError(""); setDevCode(""); }}
+              >
+                <Icon name="key" size={12} />
+                Canjear codigo
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -359,6 +541,133 @@ export default function ProfilePage() {
           Cerrar sesion
         </button>
       </div>
+
+      {/* Edit Profile Modal */}
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar perfil">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>
+          {/* Avatar preview */}
+          <div
+            style={{ cursor: "pointer", position: "relative" }}
+            onClick={() => fileRef.current?.click()}
+          >
+            {editImage ? (
+              <img
+                src={editImage}
+                alt="Preview"
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid var(--border)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "2px dashed var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
+                <Icon name="plus" size={20} color="var(--text-lo)" />
+                <span style={{ fontSize: 9, color: "var(--text-lo)", fontFamily: "var(--font-mono)" }}>
+                  Subir foto
+                </span>
+              </div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImagePick}
+              style={{ display: "none" }}
+            />
+          </div>
+
+          {/* Name input */}
+          <div style={{ width: "100%" }}>
+            <label className="t-label" style={{ display: "block", marginBottom: 6 }}>
+              Nombre de usuario
+            </label>
+            <input
+              className="input"
+              placeholder="Tu nombre"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              maxLength={50}
+            />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10, width: "100%", justifyContent: "flex-end" }}>
+            <button className="btn btn-ghost" onClick={() => setEditOpen(false)}>
+              Cancelar
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={saveProfile}
+              disabled={savingProfile || !editName.trim()}
+              style={{ opacity: savingProfile || !editName.trim() ? 0.5 : 1 }}
+            >
+              {savingProfile ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Redeem Code Modal */}
+      <Modal open={codeOpen} onClose={() => setCodeOpen(false)} title="Canjear codigo">
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label className="t-label" style={{ display: "block", marginBottom: 6 }}>
+              Codigo de desarrollador
+            </label>
+            <input
+              className="input"
+              placeholder="LUMIO-DEV-XXXXX"
+              value={devCode}
+              onChange={(e) => setDevCode(e.target.value.toUpperCase())}
+              maxLength={30}
+              style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.05em" }}
+            />
+          </div>
+
+          {codeError && (
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "#EF9A9A",
+              padding: "8px 12px",
+              background: "rgba(244,67,54,0.1)",
+              borderRadius: "var(--radius-sm)",
+            }}>
+              {codeError}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <button className="btn btn-ghost" onClick={() => setCodeOpen(false)}>
+              Cancelar
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={redeemCode}
+              disabled={redeemingCode || !devCode.trim()}
+              style={{ opacity: redeemingCode || !devCode.trim() ? 0.5 : 1 }}
+            >
+              {redeemingCode ? "Canjeando..." : "Canjear"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

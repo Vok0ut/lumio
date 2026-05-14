@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
 import { CreateHabitSchema } from "@/src/lib/validations";
+import { FREE_LIMITS } from "@/src/lib/plans";
 
 export async function GET() {
   const userId = await getSessionUserId();
@@ -62,6 +63,18 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const parsed = CreateHabitSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.issues[0].message);
+
+  // Límite FREE
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+  if (user?.plan !== "PREMIUM") {
+    const count = await prisma.habit.count({ where: { userId } });
+    if (count >= FREE_LIMITS.maxHabits) {
+      return NextResponse.json(
+        { error: `El plan gratuito permite maximo ${FREE_LIMITS.maxHabits} habitos. Actualiza a Premium para crear mas.` },
+        { status: 403 }
+      );
+    }
+  }
 
   const habit = await prisma.habit.create({
     data: {

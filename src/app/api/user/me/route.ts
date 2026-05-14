@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
 import { getLevelFromXP, getRankForLevel } from "@/src/lib/gamification";
+import { UpdateProfileSchema } from "@/src/lib/validations";
 
 export async function GET() {
   const userId = await getSessionUserId();
@@ -13,6 +14,8 @@ export async function GET() {
       id: true,
       email: true,
       name: true,
+      image: true,
+      plan: true,
       totalXp: true,
       createdAt: true,
     },
@@ -42,6 +45,8 @@ export async function GET() {
   return NextResponse.json({
     email: user.email,
     name: user.name,
+    image: user.image,
+    plan: user.plan,
     totalXp: user.totalXp,
     level,
     currentLevelXP,
@@ -56,4 +61,29 @@ export async function GET() {
     recentXpLogs,
     createdAt: user.createdAt,
   });
+}
+
+export async function PATCH(req: NextRequest) {
+  const userId = await getSessionUserId();
+  if (!userId) return unauthorized();
+
+  const body = await req.json();
+  const parsed = UpdateProfileSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.issues[0].message);
+
+  const data: { name?: string; image?: string } = {};
+  if (parsed.data.name !== undefined) data.name = parsed.data.name;
+  if (parsed.data.image !== undefined) data.image = parsed.data.image;
+
+  if (Object.keys(data).length === 0) {
+    return badRequest("No hay datos para actualizar");
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    select: { name: true, image: true },
+    data,
+  });
+
+  return NextResponse.json(updated);
 }

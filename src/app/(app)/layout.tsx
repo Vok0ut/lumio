@@ -88,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const title = navItem?.label ?? "Lumio";
 
   return (
-    <div className="home-root">
+    <div className="home-root custom-cursor-active">
       <CustomCursor />
       <ClickRipple />
       <Sidebar level={level} xpProgress={xpProgress} rankName={rank.name} />

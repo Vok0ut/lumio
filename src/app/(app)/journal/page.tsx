@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Modal } from "@/src/components/ui/modal";
 import { Icon } from "@/src/components/ui/icons";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { usePlan } from "@/src/hooks/use-plan";
+import { PremiumWall } from "@/src/components/ui/premium-wall";
 
 /* ---------- types ---------- */
 
@@ -203,7 +205,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
 
 export default function JournalPage() {
   const isMobile = useIsMobile();
-
+  const { isPremium, loading: planLoading } = usePlan();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -295,6 +297,10 @@ export default function JournalPage() {
   };
 
   /* ---------- render ---------- */
+
+  if (!planLoading && !isPremium) {
+    return <PremiumWall feature="Journal" />;
+  }
 
   return (
     <div className="section-inner">

@@ -16,6 +16,21 @@ export function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
+export function premiumRequired() {
+  return NextResponse.json(
+    { error: "Esta funcion requiere el plan Premium" },
+    { status: 403 }
+  );
+}
+
+export async function isPremium(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true },
+  });
+  return user?.plan === "PREMIUM";
+}
+
 export async function grantXp(userId: string, action: XpAction): Promise<number> {
   const xp = XP_REWARDS[action];
 

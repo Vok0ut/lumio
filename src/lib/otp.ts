@@ -2,7 +2,7 @@ import { Redis } from "@upstash/redis";
 import { randomBytes, timingSafeEqual } from "crypto";
 
 const OTP_TTL_SECONDS = 600; // 10 minutes
-const VERIFY_TOKEN_TTL = 120; // 2 minutes — short window to call signIn
+const VERIFY_TOKEN_TTL = 300; // 5 minutes — window to call signIn
 const OTP_PREFIX = "otp:";
 const VERIFY_PREFIX = "verified:";
 
@@ -45,8 +45,11 @@ export async function verifyOtp(
     return token; // dev fallback
   }
 
-  const stored = await redis.get<string>(`${OTP_PREFIX}${email}`);
-  if (!stored || !safeEqual(stored, code)) return null;
+  const raw = await redis.get<string | number>(`${OTP_PREFIX}${email}`);
+  if (!raw) return null;
+  // Upstash deserializa strings numéricas como number — forzar a string
+  const stored = String(raw);
+  if (!safeEqual(stored, code)) return null;
 
   await redis.del(`${OTP_PREFIX}${email}`);
 

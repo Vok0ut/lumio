@@ -67,6 +67,15 @@ export const CreateCalendarEventSchema = z.object({
   title: z.string().min(1).max(200),
 });
 
+export const UpdateProfileSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio").max(50).optional(),
+  image: z.string().max(200000).optional(), // base64 data URL
+});
+
+export const RedeemCodeSchema = z.object({
+  code: z.string().min(1, "El codigo es obligatorio").max(30),
+});
+
 export const SendOtpSchema = z.object({
   email: z.string().email(),
 });

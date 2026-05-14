@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { SparkLine, MiniBar } from "@/src/components/ui/sparkline";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 import { TiltCard } from "@/src/components/ui/tilt-card";
+import { usePlan } from "@/src/hooks/use-plan";
+import { PremiumWall } from "@/src/components/ui/premium-wall";
 
 interface StatsData {
   habitRate: number;
@@ -37,6 +39,7 @@ function activityOpacity(value: number, max: number): number {
 
 export default function StatsPage() {
   const isMobile = useIsMobile();
+  const { isPremium, loading: planLoading } = usePlan();
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +97,10 @@ export default function StatsPage() {
       sparkData: data.dailyHabits,
     },
   ];
+
+  if (!planLoading && !isPremium) {
+    return <PremiumWall feature="Estadisticas" />;
+  }
 
   return (
     <div className="section-inner">

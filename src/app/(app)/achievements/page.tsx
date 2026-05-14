@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { SKILL_TREE, type SkillNode, xpForLevel } from "@/src/lib/gamification";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 import { TiltCard } from "@/src/components/ui/tilt-card";
+import { usePlan } from "@/src/hooks/use-plan";
+import { PremiumWall } from "@/src/components/ui/premium-wall";
 
 type Tab = "tree" | "badges" | "rewards";
 
@@ -315,6 +317,7 @@ function RewardsView({ rewards }: { rewards: Reward[] }) {
 
 export default function AchievementsPage() {
   const isMobile = useIsMobile();
+  const { isPremium, loading: planLoading } = usePlan();
   const [tab, setTab] = useState<Tab>("tree");
   const [data, setData] = useState<AchievementsApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -365,6 +368,10 @@ export default function AchievementsPage() {
 
   const badgeCount = badges.filter((b) => b.unlocked).length;
   const rewardCount = rewards.filter((r) => r.unlocked).length;
+
+  if (!planLoading && !isPremium) {
+    return <PremiumWall feature="Logros y Arbol de Habilidades" />;
+  }
 
   return (
     <div className="section-inner">

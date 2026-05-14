@@ -26,6 +26,14 @@ export async function PATCH(
     where: { habitId_date: { habitId: id, date: dateOnly } },
   });
 
+  // Una vez completado hoy, no se puede desmarcar
+  if (existing?.completed && !parsed.data.completed) {
+    return NextResponse.json(
+      { error: "El habito ya fue completado hoy" },
+      { status: 400 }
+    );
+  }
+
   let xpGranted = 0;
 
   if (existing) {

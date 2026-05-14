@@ -358,9 +358,9 @@ select.input {
   pointer-events: none;
 }
 
-/* === CUSTOM CURSOR === */
-html, html * { cursor: none !important; }
-@media (pointer: coarse) { html, html * { cursor: auto !important; } }
+/* === CUSTOM CURSOR (only inside app layout that renders CustomCursor) === */
+.custom-cursor-active, .custom-cursor-active * { cursor: none !important; }
+@media (pointer: coarse) { .custom-cursor-active, .custom-cursor-active * { cursor: auto !important; } }
 
 .custom-cursor-layer {
   position: fixed; inset: 0; z-index: 9999;

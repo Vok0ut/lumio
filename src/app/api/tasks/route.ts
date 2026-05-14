@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
 import { CreateTaskSchema } from "@/src/lib/validations";
+import { FREE_LIMITS } from "@/src/lib/plans";
 
 export async function GET() {
   const userId = await getSessionUserId();
@@ -28,6 +29,18 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const parsed = CreateTaskSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.issues[0].message);
+
+  // Límite FREE (solo tareas activas, no DONE)
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+  if (user?.plan !== "PREMIUM") {
+    const count = await prisma.task.count({ where: { userId, status: { not: "DONE" } } });
+    if (count >= FREE_LIMITS.maxTasks) {
+      return NextResponse.json(
+        { error: `El plan gratuito permite maximo ${FREE_LIMITS.maxTasks} tareas activas. Actualiza a Premium para crear mas.` },
+        { status: 403 }
+      );
+    }
+  }
 
   const task = await prisma.task.create({
     data: {

@@ -59,7 +59,7 @@ function LoginNav({ onGoogleSignIn }: { onGoogleSignIn: () => void }) {
 
 /* ─── Main Login Page ─── */
 
-type Step = "email" | "code" | "success";
+type Step = "email" | "code" | "devcode" | "success";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -68,6 +68,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>("email");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [devCodeInput, setDevCodeInput] = useState("");
 
   const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
   const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
@@ -272,6 +273,70 @@ export default function LoginPage() {
                   Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
                   <a href="#">Politica de privacidad</a>
                 </p>
+
+                <button
+                  type="button"
+                  onClick={() => { setStep("devcode"); setError(""); setDevCodeInput(""); }}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    fontFamily: "var(--font-mono)", fontSize: 10,
+                    color: "var(--text-lo)", marginTop: 8,
+                    opacity: 0.5, transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+                >
+                  Tengo un codigo de desarrollador
+                </button>
+              </motion.div>
+            )}
+
+            {/* ── Dev Code Step ── */}
+            {step === "devcode" && (
+              <motion.div
+                key="devcode-step"
+                initial={{ opacity: 0, x: 80 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 80 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+              >
+                <h1 className="login-heading">Codigo de desarrollador</h1>
+                <p className="login-subheading">Introduce tu codigo para desbloquear Premium</p>
+
+                {error && (
+                  <div className="login-error">{error}</div>
+                )}
+
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
+                  <input
+                    className="login-input"
+                    type="text"
+                    placeholder="LUMIO-DEV-XXXXX"
+                    value={devCodeInput}
+                    onChange={(e) => setDevCodeInput(e.target.value.toUpperCase())}
+                    maxLength={30}
+                    style={{ textAlign: "center", fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}
+                  />
+
+                  <p style={{
+                    fontFamily: "var(--font-mono)", fontSize: 10,
+                    color: "var(--text-lo)", textAlign: "center", lineHeight: 1.5,
+                  }}>
+                    Primero inicia sesion con tu email. Podras canjear el codigo desde tu perfil.
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, width: "100%", marginTop: 24 }}>
+                  <button
+                    type="button"
+                    className="login-btn login-btn-white"
+                    onClick={() => { setStep("email"); setError(""); }}
+                    style={{ flex: 1 }}
+                  >
+                    Volver a inicio de sesion
+                  </button>
+                </div>
               </motion.div>
             )}
 

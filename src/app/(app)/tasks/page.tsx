@@ -93,7 +93,7 @@ export default function TasksPage() {
 
   const moveTask = async (id: string, status: Status) => {
     const prev = tasks.find((t) => t.id === id);
-    if (!prev || prev.status === status) return;
+    if (!prev || prev.status === status || prev.status === "DONE") return;
 
     /* optimistic update */
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -105,7 +105,7 @@ export default function TasksPage() {
         body: JSON.stringify({ status }),
       });
 
-      if (status === "DONE" && prev.status !== "DONE") {
+      if (status === "DONE") {
         setXpFlash(id);
         setTimeout(() => setXpFlash(null), 1200);
       }
@@ -180,10 +180,13 @@ export default function TasksPage() {
   );
 
   const MoveButtons = ({ task }: { task: Task }) => {
+    // Una vez completada, no se muestran botones de movimiento
+    if (task.status === "DONE") return null;
+
     const btns: { label: string; to: Status }[] = [];
     if (task.status !== "TODO") btns.push({ label: "Todo", to: "TODO" });
     if (task.status !== "IN_PROGRESS") btns.push({ label: "Progreso", to: "IN_PROGRESS" });
-    if (task.status !== "DONE") btns.push({ label: "Done", to: "DONE" });
+    btns.push({ label: "Done", to: "DONE" });
 
     return (
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>

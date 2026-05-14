@@ -20,6 +20,14 @@ export async function PATCH(
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
+  // Una vez completada, la tarea no puede cambiar de estado
+  if (task.status === "DONE" && parsed.data.status) {
+    return NextResponse.json(
+      { error: "La tarea ya esta completada" },
+      { status: 400 }
+    );
+  }
+
   let xpGranted = 0;
   const wasDone = task.status === "DONE";
   const willBeDone = parsed.data.status === "DONE";

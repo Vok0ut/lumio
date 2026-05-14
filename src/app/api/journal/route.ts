@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest, grantXp } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, grantXp, isPremium, premiumRequired } from "@/src/lib/api-utils";
 import { CreateJournalSchema } from "@/src/lib/validations";
 
 export async function GET(req: NextRequest) {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  if (!(await isPremium(userId))) return premiumRequired();
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "1", 10);
