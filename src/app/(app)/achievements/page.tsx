@@ -56,7 +56,7 @@ const DEFAULT_BADGES: Badge[] = [
   { id: "tasks50", name: "50 tareas", description: "Completa 50 tareas", unlocked: false },
 ];
 
-const BADGE_ICONS = ["★", "🔥", "◆", "⬡", "✦", "⚡"];
+const BADGE_ICONS = ["★", "✦", "◆", "⬡", "✧", "↯"];
 
 function getSkillLevel(skills: SkillProgress[], nodeId: string): SkillProgress | null {
   return skills.find((s) => s.id === nodeId) ?? null;

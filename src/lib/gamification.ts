@@ -47,7 +47,7 @@ export interface Rank {
 }
 
 export const RANKS: Rank[] = [
-  { name: "Novato", minLevel: 1, maxLevel: 10, discount: 0 },
+  { name: "Iniciado", minLevel: 1, maxLevel: 10, discount: 0 },
   { name: "Aprendiz", minLevel: 11, maxLevel: 20, discount: 0 },
   { name: "Explorador", minLevel: 21, maxLevel: 30, discount: 0 },
   { name: "Guerrero", minLevel: 31, maxLevel: 40, discount: 5 },

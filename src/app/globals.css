@@ -751,7 +751,7 @@ select.input {
   .sidebar { display: none !important; }
   .main-topbar { padding: 0 14px; height: 44px; }
   .main-content { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
-  .section-inner { padding: 16px 14px !important; gap: 14px !important; }
+  .section-inner { padding: 16px 14px 80px !important; gap: 14px !important; }
   .t-display { font-size: 24px !important; }
   .t-title { font-size: 17px !important; }
   .card { border-radius: 10px !important; }

@@ -19,7 +19,7 @@ const FEATURES = [
   { name: "Kanban de tareas", icon: "☰" },
   { name: "Journal + estadisticas", icon: "✎" },
   { name: "Arbol de habilidades", icon: "⬡" },
-  { name: "Informes IA", icon: "⚡" },
+  { name: "Informes IA", icon: "↯" },
 ];
 
 const FAQ_ITEMS = [
@@ -67,7 +67,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           flexShrink: 0,
         }}>+</span>
       </div>
-      <div className="faq-a" style={{ maxHeight: open ? 120 : 0 }}>
+      <div className="faq-a" style={{ maxHeight: open ? 200 : 0 }}>
         <p>{a}</p>
       </div>
     </button>
@@ -262,7 +262,6 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {isMobile && <div style={{ height: 64 }} />}
     </div>
   );
 }

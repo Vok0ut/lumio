@@ -167,31 +167,31 @@ function HeroStrip({ profile, isMobile }: { profile: UserProfile | null; isMobil
         flexDirection: isMobile ? "column" : "row",
       }}>
         {/* Left: level + rank */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 12 : 16, width: isMobile ? "100%" : "auto" }}>
           <div style={{
-            width: 52, height: 52, borderRadius: 14,
+            width: isMobile ? 44 : 52, height: isMobile ? 44 : 52, borderRadius: 12,
             background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-mid)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: 18,
-            color: "var(--accent)",
+            fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: isMobile ? 15 : 18,
+            color: "var(--accent)", flexShrink: 0,
             boxShadow: "inset 0 0 30px rgba(232,230,223,0.04)",
           }}>
             {String(level).padStart(2, "0")}
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em", color: "var(--text-lo)", textTransform: "uppercase" as const, marginBottom: 4 }}>
               Nivel actual
             </div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--text-hi)", marginBottom: 8 }}>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 14 : 16, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--text-hi)", marginBottom: 8 }}>
               {rank.name}
             </div>
             <div style={{ width: isMobile ? "100%" : 280 }}>
               <div className="progress-bar" style={{ height: 6 }}>
                 <div className="progress-fill" style={{ width: `${pct}%`, boxShadow: "0 0 10px rgba(232,230,223,0.3)" }} />
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)", flexWrap: "wrap" as const, gap: 4 }}>
                 <span>{currentLevelXP} / {xpToNextLevel} XP</span>
-                <span>faltan {xpToNextLevel - currentLevelXP} para LVL {String(level + 1).padStart(2, "0")}</span>
+                <span>LVL {String(level + 1).padStart(2, "0")}</span>
               </div>
             </div>
           </div>
