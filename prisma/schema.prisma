@@ -23,14 +23,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  habits   Habit[]
-  tasks    Task[]
-  goals    Goal[]
-  journals JournalEntry[]
-  events   CalendarEvent[]
-  xpLogs   XpLog[]
+  accounts         Account[]
+  sessions         Session[]
+  habits           Habit[]
+  tasks            Task[]
+  goals            Goal[]
+  journals         JournalEntry[]
+  events           CalendarEvent[]
+  xpLogs           XpLog[]
+  nutritionProfile NutritionProfile?
+  foodEntries      FoodEntry[]
+  mealTemplates    MealTemplate[]
+  weightLogs       WeightLog[]
 }
 
 model DevCode {
@@ -172,4 +176,74 @@ model XpLog {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── LumioNutrition ───
+
+enum NutritionGoal {
+  MUSCLE_GAIN
+  MAINTENANCE
+  FAT_LOSS
+}
+
+model NutritionProfile {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  weight        Float         // kg
+  height        Float         // cm
+  age           Int
+  goal          NutritionGoal
+  activityLevel Float         @default(1.55) // PAL factor
+  bmr           Float         // kcal — cached Mifflin-St Jeor
+  tdee          Float         // kcal — BMR * activityLevel
+  targetKcal    Float         // kcal — adjusted by goal
+  targetProtein Float         // g
+  targetCarbs   Float         // g
+  targetFat     Float         // g
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime // date only (T00:00:00Z)
+  meal      String   // "desayuno" | "almuerzo" | "cena" | "snack"
+  name      String
+  grams     Float
+  kcal      Float
+  protein   Float    @default(0)
+  carbs     Float    @default(0)
+  fat       Float    @default(0)
+  photoUrl  String?  // base64 data URL or null
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model MealTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  meal      String
+  foods     String   // JSON stringified array of { name, grams, kcal, protein, carbs, fat }
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WeightLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  weight    Float    // kg
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
 }

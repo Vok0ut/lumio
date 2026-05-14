@@ -69,7 +69,7 @@ export const CreateCalendarEventSchema = z.object({
 
 export const UpdateProfileSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio").max(50).optional(),
-  image: z.string().max(200000).optional(), // base64 data URL
+  image: z.string().max(500000).optional(), // base64 data URL (up to ~375KB)
 });
 
 export const RedeemCodeSchema = z.object({

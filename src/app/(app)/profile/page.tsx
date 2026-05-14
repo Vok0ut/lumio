@@ -129,7 +129,7 @@ export default function ProfilePage() {
   const [codeError, setCodeError] = useState("");
   const [redeemingCode, setRedeemingCode] = useState(false);
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     fetch("/api/user/me")
       .then((r) => r.json())
       .then((data) => {
@@ -138,6 +138,17 @@ export default function ProfilePage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  /* Re-fetch when window regains focus so XP/level updates are reflected */
+  useEffect(() => {
+    const onFocus = () => loadProfile();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadProfile]);
 
   const openEdit = useCallback(() => {
     if (!profile) return;
@@ -195,14 +206,14 @@ export default function ProfilePage() {
         }),
       });
       if (res.ok) {
-        const updated = await res.json();
-        setProfile((prev) => prev ? { ...prev, name: updated.name, image: updated.image } : prev);
         setEditOpen(false);
+        /* Full re-fetch to ensure all data (image, XP, stats) is current */
+        loadProfile();
       }
     } finally {
       setSavingProfile(false);
     }
-  }, [profile, editName, editImage]);
+  }, [profile, editName, editImage, loadProfile]);
 
   if (loading) {
     return (

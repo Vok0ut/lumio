@@ -36,6 +36,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         .then(setProfile)
         .catch(() => {});
     }
+  }, [status, pathname]);
+
+  /* Re-fetch profile when window regains focus (e.g. after XP changes in another tab) */
+  useEffect(() => {
+    const onFocus = () => {
+      if (status === "authenticated") {
+        fetch("/api/user/me")
+          .then((r) => r.json())
+          .then(setProfile)
+          .catch(() => {});
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [status]);
 
   if (status === "loading") {

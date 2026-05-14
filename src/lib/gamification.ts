@@ -108,6 +108,7 @@ export const NAV_ITEMS = [
   { key: "habits", label: "Habitos", icon: "repeat" },
   { key: "tasks", label: "Tareas", icon: "check-square" },
   { key: "goals", label: "Metas", icon: "target" },
+  { key: "nutrition", label: "Nutricion", icon: "heart" },
   { key: "calendar", label: "Calendario", icon: "calendar" },
   { key: "journal", label: "Journal", icon: "book" },
   { key: "stats", label: "Stats", icon: "bar-chart" },
