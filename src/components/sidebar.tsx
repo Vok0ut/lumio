@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "@/src/components/ui/icons";
 import { XPRing } from "@/src/components/ui/xp-ring";
+import { LumioLogo } from "@/src/components/ui/lumio-logo";
 import { NAV_ITEMS } from "@/src/lib/gamification";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 
@@ -39,17 +40,20 @@ export function Sidebar({ level, xpProgress, rankName }: SidebarProps) {
         }}
         onClick={() => setCollapsed(!collapsed)}
       >
-        <span
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 800,
-            color: "var(--text-hi)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {collapsed ? "L" : "lumio"}
-        </span>
+        <LumioLogo size={collapsed ? 22 : 20} />
+        {!collapsed && (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 16,
+              fontWeight: 800,
+              color: "var(--text-hi)",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            lumio
+          </span>
+        )}
       </div>
 
       {/* Navigation */}

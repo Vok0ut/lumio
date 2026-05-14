@@ -10,6 +10,7 @@ import { CustomCursor } from "@/src/components/ui/custom-cursor";
 import { ClickRipple } from "@/src/components/ui/click-ripple";
 import { PageTransition } from "@/src/components/ui/page-transition";
 import { getLevelFromXP, getRankForLevel, NAV_ITEMS } from "@/src/lib/gamification";
+import { LumioLogo } from "@/src/components/ui/lumio-logo";
 
 interface UserProfile {
   totalXp: number;
@@ -64,7 +65,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           justifyContent: "center",
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <LumioLogo size={48} />
           <div
             style={{
               fontSize: 24,
@@ -72,6 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               fontFamily: "var(--font-sans)",
               color: "var(--text-hi)",
               marginBottom: 8,
+              marginTop: 12,
             }}
           >
             lumio
