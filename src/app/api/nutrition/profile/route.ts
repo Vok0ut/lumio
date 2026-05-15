@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const bmr = calcBMR(weight, height, age);
   const tdee = calcTDEE(bmr, activityLevel);
   const targetKcal = calcTargetKcal(tdee, goal);
-  const { protein, carbs, fat } = calcMacros(targetKcal, weight, goal);
+  const { protein, carbs, fat, fiber } = calcMacros(targetKcal, weight, goal);
 
   const profile = await prisma.nutritionProfile.upsert({
     where: { userId },
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       targetProtein: protein,
       targetCarbs: carbs,
       targetFat: fat,
+      targetFiber: fiber,
     },
     update: {
       weight,
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
       targetProtein: protein,
       targetCarbs: carbs,
       targetFat: fat,
+      targetFiber: fiber,
     },
   });
 

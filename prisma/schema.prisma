@@ -35,6 +35,7 @@ model User {
   foodEntries      FoodEntry[]
   mealTemplates    MealTemplate[]
   weightLogs       WeightLog[]
+  customFoods      CustomFood[]
 }
 
 model DevCode {
@@ -200,6 +201,7 @@ model NutritionProfile {
   targetProtein Float         // g
   targetCarbs   Float         // g
   targetFat     Float         // g
+  targetFiber   Float         @default(30) // g
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -217,12 +219,30 @@ model FoodEntry {
   protein   Float    @default(0)
   carbs     Float    @default(0)
   fat       Float    @default(0)
+  fiber     Float    @default(0)
   photoUrl  String?  // base64 data URL or null
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
+}
+
+model CustomFood {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  kcal      Float    // per 100g
+  protein   Float    @default(0)
+  carbs     Float    @default(0)
+  fat       Float    @default(0)
+  fiber     Float    @default(0)
+  labelPhoto String? // base64 photo of nutrition label
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model MealTemplate {

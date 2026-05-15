@@ -13,6 +13,7 @@ const CreateEntrySchema = z.object({
   protein: z.number().min(0).optional(),
   carbs: z.number().min(0).optional(),
   fat: z.number().min(0).optional(),
+  fiber: z.number().min(0).optional(),
   photoUrl: z.string().max(500000).optional(),
 });
 
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
   let protein = parsed.data.protein;
   let carbs = parsed.data.carbs;
   let fat = parsed.data.fat;
+  let fiber = parsed.data.fiber;
 
   if (kcal === undefined) {
     const est = estimateNutrition(name, grams);
@@ -77,6 +79,7 @@ export async function POST(req: NextRequest) {
     protein = est.protein;
     carbs = est.carbs;
     fat = est.fat;
+    fiber = est.fiber;
   }
 
   const entry = await prisma.foodEntry.create({
@@ -90,6 +93,7 @@ export async function POST(req: NextRequest) {
       protein: protein ?? 0,
       carbs: carbs ?? 0,
       fat: fat ?? 0,
+      fiber: fiber ?? 0,
       photoUrl: photoUrl ?? null,
     },
   });
