@@ -347,17 +347,17 @@ function MacroRing({
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ transition: "stroke-dasharray 0.4s" }}
         />
-        <text x={size / 2} y={size / 2 - 3} textAnchor="middle" dominantBaseline="middle"
-          fill="var(--text-hi)" style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700 }}>
+        <text x={size / 2} y={size / 2 - 4} textAnchor="middle" dominantBaseline="middle"
+          fill="var(--text-hi)" style={{ fontFamily: "var(--font-sans)", fontSize: size * 0.18, fontWeight: 700 }}>
           {Math.round(value)}
         </text>
-        <text x={size / 2} y={size / 2 + 10} textAnchor="middle" dominantBaseline="middle"
-          fill="var(--text-lo)" style={{ fontFamily: "var(--font-mono)", fontSize: 8 }}>
+        <text x={size / 2} y={size / 2 + size * 0.14} textAnchor="middle" dominantBaseline="middle"
+          fill="var(--text-lo)" style={{ fontFamily: "var(--font-mono)", fontSize: size * 0.1 }}>
           /{Math.round(max)}{unit}
         </text>
       </svg>
       <div style={{
-        fontFamily: "var(--font-mono)", fontSize: 10, color, marginTop: 2, fontWeight: 600,
+        fontFamily: "var(--font-mono)", fontSize: 11, color, marginTop: 4, fontWeight: 600,
       }}>
         {label}
       </div>
@@ -1285,34 +1285,49 @@ export default function NutritionPage() {
       </div>
 
       {/* ─── Calorie + Macros Summary ─── */}
-      <div className="card" style={{ padding: isMobile ? 16 : 24 }}>
+      <div className="card" style={{ padding: isMobile ? 16 : 28 }}>
         <div style={{
-          display: "flex", alignItems: isMobile ? "center" : "center",
-          justifyContent: "center", gap: isMobile ? 20 : 40,
-          flexDirection: isMobile ? "column" : "row",
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr auto 1fr",
+          alignItems: "center",
+          gap: isMobile ? 16 : 0,
         }}>
-          {/* Donut */}
-          <CalorieDonut consumed={dayTotals.kcal} target={profile.targetKcal} size={isMobile ? 160 : 180} />
-
-          {/* Stats next to donut */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 140 }}>
-            <div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginBottom: 2 }}>
+          {/* Left stats */}
+          <div style={{
+            display: "flex", flexDirection: "column", gap: 16,
+            alignItems: isMobile ? "center" : "flex-end",
+            paddingRight: isMobile ? 0 : 32,
+          }}>
+            <div style={{ textAlign: isMobile ? "center" : "right" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginBottom: 4, letterSpacing: "0.08em" }}>
                 OBJETIVO
               </div>
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 22, fontWeight: 700, color: "var(--text-hi)" }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 28, fontWeight: 700, color: "var(--text-hi)", letterSpacing: "-0.02em" }}>
                 {Math.round(profile.targetKcal)}
               </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)" }}>kcal</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)" }}>kcal</div>
             </div>
-            <div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginBottom: 2 }}>
+          </div>
+
+          {/* Donut center */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <CalorieDonut consumed={dayTotals.kcal} target={profile.targetKcal} size={isMobile ? 160 : 200} />
+          </div>
+
+          {/* Right stats */}
+          <div style={{
+            display: "flex", flexDirection: "column", gap: 16,
+            alignItems: isMobile ? "center" : "flex-start",
+            paddingLeft: isMobile ? 0 : 32,
+          }}>
+            <div style={{ textAlign: isMobile ? "center" : "left" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginBottom: 4, letterSpacing: "0.08em" }}>
                 CONSUMIDO
               </div>
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 22, fontWeight: 700, color: MACRO_COLORS.kcal }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 28, fontWeight: 700, color: MACRO_COLORS.kcal, letterSpacing: "-0.02em" }}>
                 {Math.round(dayTotals.kcal)}
               </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)" }}>kcal</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)" }}>kcal</div>
             </div>
           </div>
         </div>
@@ -1320,17 +1335,17 @@ export default function NutritionPage() {
         {/* 4 Macro Rings */}
         <div style={{
           display: "flex", justifyContent: "space-around",
-          marginTop: isMobile ? 20 : 24, paddingTop: 16,
+          marginTop: isMobile ? 20 : 28, paddingTop: 20,
           borderTop: "1px solid var(--border)",
         }}>
           <MacroRing value={dayTotals.protein} max={profile.targetProtein}
-            label="Proteina" unit="g" color={MACRO_COLORS.protein} size={isMobile ? 64 : 72} />
+            label="Proteina" unit="g" color={MACRO_COLORS.protein} size={isMobile ? 68 : 88} />
           <MacroRing value={dayTotals.carbs} max={profile.targetCarbs}
-            label="Carbos" unit="g" color={MACRO_COLORS.carbs} size={isMobile ? 64 : 72} />
+            label="Carbos" unit="g" color={MACRO_COLORS.carbs} size={isMobile ? 68 : 88} />
           <MacroRing value={dayTotals.fat} max={profile.targetFat}
-            label="Grasas" unit="g" color={MACRO_COLORS.fat} size={isMobile ? 64 : 72} />
+            label="Grasas" unit="g" color={MACRO_COLORS.fat} size={isMobile ? 68 : 88} />
           <MacroRing value={dayTotals.fiber} max={profile.targetFiber || 30}
-            label="Fibra" unit="g" color={MACRO_COLORS.fiber} size={isMobile ? 64 : 72} />
+            label="Fibra" unit="g" color={MACRO_COLORS.fiber} size={isMobile ? 68 : 88} />
         </div>
       </div>
 
