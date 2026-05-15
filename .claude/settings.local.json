@@ -56,7 +56,9 @@
       "Bash(Select-Object Name)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(cat > *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git rm *)",
+      "WebSearch"
     ]
   }
 }

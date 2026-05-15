@@ -95,7 +95,9 @@ export function calcMacros(
   return { protein, carbs, fat, fiber };
 }
 
-/** Built-in food database: kcal + macros per 100g */
+/** Built-in food database: kcal + macros per 100g.
+ *  unitName / unitGrams: optional — when set, the UI auto-fills the grams
+ *  field with unitGrams and shows "1 unitName" as the default quantity hint. */
 export interface FoodItem {
   name: string;
   kcal: number;
@@ -104,6 +106,8 @@ export interface FoodItem {
   fat: number;
   fiber: number;
   category: string;
+  unitName?: string;   // e.g. "unidad", "porción", "ración"
+  unitGrams?: number;  // default grams pre-filled when food is selected
 }
 
 export const FOOD_DATABASE: FoodItem[] = [
@@ -231,37 +235,63 @@ export const FOOD_DATABASE: FoodItem[] = [
   { name: "Cafe con leche", kcal: 40, protein: 2, carbs: 3.5, fat: 2, fiber: 0, category: "otro" },
   { name: "Batido de proteinas", kcal: 120, protein: 24, carbs: 3, fat: 1.5, fiber: 0.5, category: "otro" },
 
-  // ── Fast Food ──
-  { name: "Big Mac", kcal: 257, protein: 13, carbs: 24, fat: 12, fiber: 1.5, category: "fast_food" },
-  { name: "Big Mac menu completo", kcal: 210, protein: 10, carbs: 24, fat: 9, fiber: 1.2, category: "fast_food" },
-  { name: "McPollo", kcal: 217, protein: 13, carbs: 26, fat: 7, fiber: 1.2, category: "fast_food" },
-  { name: "Nuggets de pollo (6 uds)", kcal: 270, protein: 15, carbs: 17, fat: 16, fiber: 0.5, category: "fast_food" },
-  { name: "Patatas fritas McDonald's", kcal: 312, protein: 4, carbs: 40, fat: 15, fiber: 3, category: "fast_food" },
-  { name: "Hamburguesa con queso", kcal: 300, protein: 15, carbs: 33, fat: 13, fiber: 1, category: "fast_food" },
-  { name: "Whopper", kcal: 278, protein: 13, carbs: 25, fat: 13, fiber: 1, category: "fast_food" },
-  { name: "Pizza margarita", kcal: 266, protein: 11, carbs: 33, fat: 10, fiber: 2.3, category: "fast_food" },
-  { name: "Pizza pepperoni", kcal: 298, protein: 13, carbs: 32, fat: 13, fiber: 2, category: "fast_food" },
-  { name: "Pizza 4 quesos", kcal: 310, protein: 14, carbs: 31, fat: 14, fiber: 1.8, category: "fast_food" },
-  { name: "Kebab de pollo", kcal: 200, protein: 16, carbs: 22, fat: 6, fiber: 2, category: "fast_food" },
-  { name: "Kebab de ternera", kcal: 220, protein: 14, carbs: 22, fat: 9, fiber: 2, category: "fast_food" },
-  { name: "Durum kebab", kcal: 215, protein: 15, carbs: 25, fat: 7, fiber: 2.5, category: "fast_food" },
-  { name: "Shawarma de pollo", kcal: 185, protein: 17, carbs: 18, fat: 5, fiber: 1.5, category: "fast_food" },
-  { name: "Falafel", kcal: 333, protein: 13, carbs: 32, fat: 18, fiber: 5, category: "fast_food" },
-  { name: "Hot dog", kcal: 290, protein: 11, carbs: 26, fat: 17, fiber: 1, category: "fast_food" },
-  { name: "Perrito caliente", kcal: 280, protein: 10, carbs: 25, fat: 16, fiber: 1, category: "fast_food" },
-  { name: "Bocadillo de jamon y queso", kcal: 280, protein: 16, carbs: 28, fat: 11, fiber: 2, category: "fast_food" },
-  { name: "Sandwich mixto", kcal: 260, protein: 14, carbs: 29, fat: 10, fiber: 1.5, category: "fast_food" },
-  { name: "Sandwich club", kcal: 320, protein: 18, carbs: 32, fat: 14, fiber: 2, category: "fast_food" },
-  { name: "Burrito de pollo", kcal: 217, protein: 14, carbs: 24, fat: 7, fiber: 3, category: "fast_food" },
-  { name: "Taco de pollo", kcal: 170, protein: 12, carbs: 17, fat: 6, fiber: 2, category: "fast_food" },
-  { name: "Wrap de pollo", kcal: 195, protein: 15, carbs: 22, fat: 5, fiber: 2, category: "fast_food" },
-  { name: "Sushi (pieza)", kcal: 45, protein: 2.5, carbs: 7, fat: 0.8, fiber: 0.2, category: "fast_food" },
-  { name: "Sushi roll california", kcal: 255, protein: 9, carbs: 38, fat: 7, fiber: 1, category: "fast_food" },
-  { name: "Ramen", kcal: 436, protein: 18, carbs: 60, fat: 12, fiber: 2, category: "fast_food" },
-  { name: "Gyozas (4 uds)", kcal: 210, protein: 10, carbs: 24, fat: 8, fiber: 1, category: "fast_food" },
-  { name: "Pad Thai", kcal: 181, protein: 8, carbs: 24, fat: 6, fiber: 1.5, category: "fast_food" },
-  { name: "Pollo al curry", kcal: 165, protein: 14, carbs: 8, fat: 9, fiber: 2, category: "fast_food" },
-  { name: "Kebab durum", kcal: 218, protein: 14, carbs: 26, fat: 7, fiber: 2.2, category: "fast_food" },
+  // ── Fast Food (valores por unidad donde aplica) ──
+  // Big Mac: 215g por unidad → 550 kcal totales (fuente: McDonald's oficial)
+  { name: "Big Mac", kcal: 256, protein: 11.6, carbs: 20.5, fat: 13.5, fiber: 1.4, category: "fast_food", unitName: "unidad", unitGrams: 215 },
+  // McPollo: 186g → 427 kcal (fuente: fatsecret.es)
+  { name: "McPollo", kcal: 229, protein: 10.8, carbs: 20.4, fat: 10.8, fiber: 1.1, category: "fast_food", unitName: "unidad", unitGrams: 186 },
+  // McNuggets 6 uds: 107g → 268 kcal (fuente: fatsecret.es McDonald's España)
+  { name: "McNuggets de pollo (6)", kcal: 251, protein: 14, carbs: 15.9, fat: 15, fiber: 0.5, category: "fast_food", unitName: "6 uds", unitGrams: 107 },
+  // Patatas fritas medianas: 102g → 330 kcal
+  { name: "Patatas fritas McDonald's (medianas)", kcal: 323, protein: 3.9, carbs: 41.2, fat: 15.7, fiber: 3.4, category: "fast_food", unitName: "ración mediana", unitGrams: 102 },
+  // Patatas fritas pequeñas: 80g → 231 kcal
+  { name: "Patatas fritas McDonald's (pequeñas)", kcal: 289, protein: 3.5, carbs: 37, fat: 14, fiber: 3, category: "fast_food", unitName: "ración pequeña", unitGrams: 80 },
+  // Hamburguesa con queso: 119g → 301 kcal
+  { name: "Hamburguesa con queso", kcal: 253, protein: 14.3, carbs: 27.7, fat: 10.9, fiber: 1.3, category: "fast_food", unitName: "unidad", unitGrams: 119 },
+  // Whopper sin queso: 290g → 678 kcal (fuente: Burger King oficial)
+  { name: "Whopper", kcal: 234, protein: 10.3, carbs: 17.6, fat: 13.8, fiber: 1, category: "fast_food", unitName: "unidad", unitGrams: 290 },
+  // Pizza margarita porción (1/8 pizza italiana): 120g → 261 kcal (fuente: fitia.app)
+  { name: "Pizza margarita (porción)", kcal: 218, protein: 10, carbs: 25, fat: 8.3, fiber: 1.7, category: "fast_food", unitName: "porción 1/8", unitGrams: 120 },
+  // Pizza pepperoni porción: 125g → 298 kcal
+  { name: "Pizza pepperoni (porción)", kcal: 238, protein: 11, carbs: 23, fat: 11.5, fiber: 1.5, category: "fast_food", unitName: "porción 1/8", unitGrams: 125 },
+  // Pizza 4 quesos porción: 130g → 340 kcal
+  { name: "Pizza 4 quesos (porción)", kcal: 262, protein: 13, carbs: 22, fat: 13.5, fiber: 1.4, category: "fast_food", unitName: "porción 1/8", unitGrams: 130 },
+  // Kebab de pollo en pita: 350g → 700 kcal (fuente: khankebab.es + fitia.app)
+  { name: "Kebab de pollo (pita)", kcal: 200, protein: 10, carbs: 20, fat: 7.1, fiber: 1.4, category: "fast_food", unitName: "unidad", unitGrams: 350 },
+  // Kebab de ternera en pita: 380g → 760 kcal
+  { name: "Kebab de ternera (pita)", kcal: 200, protein: 9.5, carbs: 18, fat: 8.5, fiber: 1.3, category: "fast_food", unitName: "unidad", unitGrams: 380 },
+  // Durum kebab de pollo: 400g → 800 kcal (fuente: beirutista.es)
+  { name: "Durum kebab de pollo", kcal: 200, protein: 8.75, carbs: 20, fat: 7.5, fiber: 1.25, category: "fast_food", unitName: "unidad", unitGrams: 400 },
+  // Durum kebab mixto: 420g → 880 kcal
+  { name: "Durum kebab mixto", kcal: 210, protein: 9.5, carbs: 21, fat: 8.5, fiber: 1.2, category: "fast_food", unitName: "unidad", unitGrams: 420 },
+  // Shawarma de pollo: 300g → 555 kcal
+  { name: "Shawarma de pollo", kcal: 185, protein: 17, carbs: 18, fat: 5, fiber: 1.5, category: "fast_food", unitName: "unidad", unitGrams: 300 },
+  // Falafel (4 bolas): 80g → 267 kcal
+  { name: "Falafel (4 bolas)", kcal: 333, protein: 13, carbs: 32, fat: 18, fiber: 5, category: "fast_food", unitName: "4 bolas", unitGrams: 80 },
+  // Perrito caliente: 150g → 420 kcal
+  { name: "Perrito caliente", kcal: 280, protein: 10.7, carbs: 25.3, fat: 16, fiber: 1, category: "fast_food", unitName: "unidad", unitGrams: 150 },
+  // Bocadillo jamón y queso: 200g → 520 kcal
+  { name: "Bocadillo jamon y queso", kcal: 260, protein: 15, carbs: 28, fat: 11, fiber: 2, category: "fast_food", unitName: "unidad", unitGrams: 200 },
+  // Sandwich mixto: 160g → 400 kcal
+  { name: "Sandwich mixto", kcal: 250, protein: 13, carbs: 29, fat: 9.4, fiber: 1.5, category: "fast_food", unitName: "unidad", unitGrams: 160 },
+  // Burrito de pollo: 300g → 540 kcal (fuente: fitia.app)
+  { name: "Burrito de pollo", kcal: 180, protein: 12, carbs: 22, fat: 5, fiber: 3, category: "fast_food", unitName: "unidad", unitGrams: 300 },
+  // Wrap de pollo: 220g → 430 kcal (fuente: fitia.app)
+  { name: "Wrap de pollo", kcal: 195, protein: 14, carbs: 22, fat: 5.5, fiber: 2, category: "fast_food", unitName: "unidad", unitGrams: 220 },
+  // Taco de pollo: 120g → 205 kcal
+  { name: "Taco de pollo", kcal: 170, protein: 12, carbs: 17, fat: 6, fiber: 2, category: "fast_food", unitName: "unidad", unitGrams: 120 },
+  // Sushi pieza nigiri: 30g → 48 kcal
+  { name: "Sushi pieza (nigiri)", kcal: 160, protein: 7, carbs: 27, fat: 1.7, fiber: 0.3, category: "fast_food", unitName: "pieza", unitGrams: 30 },
+  // California roll (8 piezas): 220g → 335 kcal
+  { name: "California roll (8 piezas)", kcal: 152, protein: 6, carbs: 22, fat: 4.5, fiber: 1.5, category: "fast_food", unitName: "8 piezas", unitGrams: 220 },
+  // Ramen completo: 500g → 650 kcal
+  { name: "Ramen", kcal: 130, protein: 8, carbs: 17, fat: 3.5, fiber: 1, category: "fast_food", unitName: "bol", unitGrams: 500 },
+  // Gyozas 4 uds: 80g → 200 kcal
+  { name: "Gyozas (4 uds)", kcal: 250, protein: 10.5, carbs: 24, fat: 9.5, fiber: 1.3, category: "fast_food", unitName: "4 uds", unitGrams: 80 },
+  // Pad Thai ración: 350g → 560 kcal
+  { name: "Pad Thai", kcal: 160, protein: 9, carbs: 22, fat: 4.3, fiber: 1.5, category: "fast_food", unitName: "ración", unitGrams: 350 },
+  // Pollo al curry ración: 300g → 480 kcal
+  { name: "Pollo al curry", kcal: 160, protein: 14, carbs: 9, fat: 7, fiber: 2, category: "fast_food", unitName: "ración", unitGrams: 300 },
 
   // ── Comida española ──
   { name: "Tortilla de patata", kcal: 176, protein: 8, carbs: 15, fat: 9, fiber: 1.2, category: "espanola" },

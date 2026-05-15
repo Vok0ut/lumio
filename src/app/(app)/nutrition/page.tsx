@@ -584,6 +584,9 @@ function AddFoodModal({
     setName(food.name);
     setQuery(food.name);
     setSuggestions([]);
+    // Auto-fill grams with unit size if defined
+    const unitG = (food as FoodItem).unitGrams;
+    if (unitG) setGrams(String(unitG));
   };
 
   const preview = useMemo(() => {
@@ -689,7 +692,14 @@ function AddFoodModal({
 
         {/* Grams */}
         <div>
-          <label className="t-label" style={{ display: "block", marginBottom: 6 }}>Cantidad (g)</label>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <label className="t-label">Cantidad (g)</label>
+            {selectedFood && (selectedFood as FoodItem).unitGrams && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--accent)", letterSpacing: "0.06em" }}>
+                1 {(selectedFood as FoodItem).unitName} = {(selectedFood as FoodItem).unitGrams}g
+              </span>
+            )}
+          </div>
           <input className="input" type="number" placeholder="150"
             value={grams} onChange={(e) => setGrams(e.target.value)} min={1} />
         </div>
