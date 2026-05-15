@@ -751,7 +751,15 @@ select.input {
     --border-hi:  rgba(255,255,255,0.34);
   }
   .t-label { color: rgba(255,255,255,0.50); }
-  .badge-dim { color: rgba(255,255,255,0.60); border-color: rgba(255,255,255,0.14); }
+  .badge-white {
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.24);
+  }
+  .badge-dim {
+    background: rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.70);
+    border-color: rgba(255,255,255,0.18);
+  }
   .nav-item { color: rgba(255,255,255,0.60); }
   .input::placeholder { color: rgba(255,255,255,0.40); }
   .progress-bar { background: rgba(255,255,255,0.12); }

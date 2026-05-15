@@ -28,9 +28,9 @@ const COLUMNS: { key: Status; label: string }[] = [
 ];
 
 const PRIORITY_COLORS: Record<Priority, { bg: string; color: string }> = {
-  alta: { bg: "rgba(244,67,54,0.15)", color: "#EF9A9A" },
-  media: { bg: "rgba(255,193,7,0.15)", color: "#FFE082" },
-  baja: { bg: "rgba(76,175,80,0.15)", color: "#A5D6A7" },
+  alta: { bg: "rgba(244,67,54,0.25)", color: "#F48FB1" },
+  media: { bg: "rgba(255,193,7,0.25)", color: "#FFE082" },
+  baja: { bg: "rgba(76,175,80,0.25)", color: "#A5D6A7" },
 };
 
 /* ── Component ──────────────────────────────── */
