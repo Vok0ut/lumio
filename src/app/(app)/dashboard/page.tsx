@@ -5,6 +5,7 @@ import { useIsMobile } from "@/src/hooks/use-mobile";
 import { TiltCard } from "@/src/components/ui/tilt-card";
 import { Icon } from "@/src/components/ui/icons";
 import { getLevelFromXP, getRankForLevel } from "@/src/lib/gamification";
+import { getTodayTip } from "@/src/lib/tips";
 
 /* ── types ─────────────────────────────────────── */
 
@@ -138,6 +139,71 @@ function Spark({ data, accent = false, w = 100, h = 36 }: { data: number[]; acce
       <path d={linePath} fill="none" stroke={accent ? "var(--accent)" : "var(--text-lo)"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={last[0]} cy={last[1]} r="2.5" fill={accent ? "var(--accent)" : "#fff"} />
     </svg>
+  );
+}
+
+/* ── Daily Tip ───────────────────────────────── */
+
+const CATEGORY_COLORS: Record<string, string> = {
+  nutricion: "#F48FB1",
+  mente: "#81D4FA",
+  entrenamiento: "#FFB74D",
+  descanso: "#A5D6A7",
+  motivacion: "#FFD54F",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  nutricion: "Nutrición",
+  mente: "Mente",
+  entrenamiento: "Entrenamiento",
+  descanso: "Descanso",
+  motivacion: "Motivación",
+};
+
+function DailyTip() {
+  const tip = getTodayTip();
+  const color = CATEGORY_COLORS[tip.category] ?? "#E8E6DF";
+  const label = CATEGORY_LABELS[tip.category] ?? tip.category;
+
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+      border: "1px solid var(--border)",
+      borderLeft: `3px solid ${color}`,
+      borderRadius: "var(--radius)",
+      padding: "14px 18px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{
+          fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em",
+          color: "var(--text-lo)", textTransform: "uppercase" as const,
+        }}>
+          Consejo del dia
+        </span>
+        <span style={{
+          fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.1em",
+          color, background: `${color}18`, border: `1px solid ${color}40`,
+          borderRadius: 4, padding: "2px 7px", textTransform: "uppercase" as const,
+        }}>
+          {label}
+        </span>
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ flexShrink: 0, marginTop: 1 }}>
+          <Icon name={tip.icon} size={14} color={color} />
+        </div>
+        <p style={{
+          fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 400,
+          color: "var(--text-hi)", lineHeight: 1.55, margin: 0,
+          letterSpacing: "-0.01em",
+        }}>
+          {tip.text}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -557,6 +623,9 @@ export default function DashboardPage() {
           {dateStr.charAt(0).toUpperCase() + dateStr.slice(1)} · semana {weekNum}
         </p>
       </div>
+
+      {/* ── Daily Tip ── */}
+      <DailyTip />
 
       {/* ── Hero Strip ── */}
       <HeroStrip profile={profile} isMobile={isMobile} />

@@ -1115,6 +1115,128 @@ function WeightChart({ logs }: { logs: WeightLogItem[] }) {
 }
 
 /* ═══════════════════════════════════════════
+   Water Counter
+   ═══════════════════════════════════════════ */
+
+function WaterCounter() {
+  const [waterMl, setWaterMl] = useState(0);
+  const waterGoal = 2000;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    fetch("/api/nutrition/water")
+      .then((r) => r.json())
+      .then((data) => { if (typeof data.ml === "number") setWaterMl(data.ml); })
+      .catch(() => {});
+  }, []);
+
+  const scheduleReminder = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    localStorage.setItem("lumio_last_water", String(Date.now()));
+
+    timerRef.current = setTimeout(() => {
+      const h = new Date().getHours();
+      if (typeof Notification !== "undefined" && Notification.permission === "granted" && h >= 8 && h < 22) {
+        new Notification("💧 Lumio - Hidratación", {
+          body: "Han pasado 2 horas. ¡Es hora de beber agua!",
+        });
+      }
+    }, 2 * 60 * 60 * 1000);
+  };
+
+  const addWater = async (ml: number) => {
+    // Request notification permission on first log
+    if (waterMl === 0 && typeof Notification !== "undefined" && Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
+
+    // Optimistic update
+    setWaterMl((prev) => prev + ml);
+
+    try {
+      const res = await fetch("/api/nutrition/water", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ml }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWaterMl(data.ml);
+        scheduleReminder();
+      } else {
+        setWaterMl((prev) => prev - ml);
+      }
+    } catch {
+      setWaterMl((prev) => prev - ml);
+    }
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  const pct = Math.min(waterMl / waterGoal, 1);
+  const reached = waterMl >= waterGoal;
+
+  return (
+    <div className="card" style={{ padding: "16px 20px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+        {/* Water drop SVG */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#81D4FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2C12 2 4 10.5 4 15a8 8 0 0 0 16 0c0-4.5-8-13-8-13z" />
+        </svg>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span className="t-label">Hidratacion</span>
+            {reached ? (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#A5D6A7", fontWeight: 600 }}>
+                ¡Meta alcanzada! 💧
+              </span>
+            ) : (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#81D4FA" }}>
+                {waterMl} / {waterGoal} ml
+              </span>
+            )}
+          </div>
+          {/* Progress bar */}
+          <div style={{
+            marginTop: 6, height: 5, borderRadius: 3,
+            background: "rgba(255,255,255,0.06)", overflow: "hidden",
+          }}>
+            <div style={{
+              height: "100%", borderRadius: 3,
+              width: `${pct * 100}%`,
+              background: reached ? "#A5D6A7" : "#81D4FA",
+              transition: "width 0.4s ease",
+            }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Quick-add buttons */}
+      <div style={{ display: "flex", gap: 6 }}>
+        {[
+          { ml: 150, label: "+150ml", sub: "vaso" },
+          { ml: 250, label: "+250ml", sub: "" },
+          { ml: 500, label: "+500ml", sub: "botella" },
+          { ml: 750, label: "+750ml", sub: "" },
+        ].map(({ ml, label, sub }) => (
+          <button
+            key={ml}
+            className="btn btn-ghost"
+            style={{ flex: 1, flexDirection: "column", padding: "6px 4px", gap: 2, fontSize: 10, alignItems: "center" }}
+            onClick={() => addWater(ml)}
+          >
+            <span style={{ color: "#81D4FA", fontWeight: 600 }}>{label}</span>
+            {sub && <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, color: "var(--text-lo)" }}>{sub}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
    Main Page
    ═══════════════════════════════════════════ */
 
@@ -1292,6 +1414,9 @@ export default function NutritionPage() {
           <Icon name="plus" size={14} /> Crear alimento
         </button>
       </div>
+
+      {/* ─── Water Counter ─── */}
+      <WaterCounter />
 
       {/* ─── Calorie + Macros Summary ─── */}
       <div className="card" style={{ padding: isMobile ? 16 : 28, overflow: "visible" }}>

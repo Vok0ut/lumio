@@ -36,6 +36,7 @@ model User {
   mealTemplates    MealTemplate[]
   weightLogs       WeightLog[]
   customFoods      CustomFood[]
+  waterLogs        WaterLog[]
 }
 
 model DevCode {
@@ -262,6 +263,18 @@ model WeightLog {
   date      DateTime
   weight    Float    // kg
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model WaterLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // YYYY-MM-DD
+  ml        Int      @default(0)
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
