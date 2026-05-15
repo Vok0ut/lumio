@@ -54,8 +54,15 @@ export default {
       const isAuthRoute =
         pathname.startsWith("/api/auth") || pathname === "/login";
       const isPublicRoute = pathname === "/";
+      // Allow static PWA files without auth
+      const isStaticFile =
+        pathname === "/manifest.json" ||
+        pathname === "/sw.js" ||
+        pathname === "/apple-touch-icon.svg" ||
+        pathname.startsWith("/icon-") ||
+        pathname.startsWith("/api/auth/");
 
-      if (isAuthRoute || isPublicRoute) return true;
+      if (isAuthRoute || isPublicRoute || isStaticFile) return true;
 
       if (!isLoggedIn) return false;
 
