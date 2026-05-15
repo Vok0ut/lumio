@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#090909" rx="80"/><text x="256" y="290" text-anchor="middle" font-family="sans-serif" font-size="192" font-weight="800" fill="#E8E6DF">L</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#090909" rx="96"/>
+  <!-- outer circle -->
+  <circle cx="256" cy="256" r="150" stroke="#E8E6DF" stroke-width="8" fill="none"/>
+  <!-- center dot -->
+  <circle cx="256" cy="256" r="12" fill="#E8E6DF"/>
+  <!-- 6 spokes radiating from center -->
+  <line x1="256" y1="256" x2="352" y2="256" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="304" y2="339.14" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="208" y2="339.14" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="160" y2="256" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="208" y2="172.86" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="304" y2="172.86" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+  <!-- top accent line -->
+  <line x1="256" y1="256" x2="256" y2="130" stroke="#E8E6DF" stroke-width="8" stroke-linecap="round"/>
+</svg>
