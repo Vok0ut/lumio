@@ -120,6 +120,7 @@ export const NAV_ITEMS = [
 export const MOBILE_NAV_ITEMS = [
   { key: "dashboard", label: "Inicio", icon: "grid" },
   { key: "habits", label: "Habitos", icon: "repeat" },
+  { key: "nutrition", label: "Nutricion", icon: "heart" },
   { key: "tasks", label: "Tareas", icon: "check-square" },
   { key: "journal", label: "Journal", icon: "book" },
   { key: "profile", label: "Perfil", icon: "user" },
