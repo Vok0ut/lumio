@@ -116,7 +116,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           xpProgress={xpProgress}
           totalXp={totalXp}
         />
-        <div className="main-content" style={{ overflowY: "auto" }}>
+        <div className="main-content" style={{ overflowY: "auto", overflowX: "hidden" }}>
           <PageTransition>{children}</PageTransition>
         </div>
       </div>

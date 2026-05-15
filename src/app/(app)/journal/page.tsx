@@ -124,7 +124,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
       className="card"
       onClick={() => setExpanded((p) => !p)}
       style={{
-        padding: "20px 24px",
+        padding: "16px 18px",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",

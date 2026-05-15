@@ -55,7 +55,7 @@ export function MiniBar({
   const barW = (width - gap * (data.length - 1)) / data.length;
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ maxWidth: width }}>
       {data.map((v, i) => {
         const h = (v / max) * height;
         return (

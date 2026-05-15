@@ -77,7 +77,7 @@ function MicroHistory({ history }: { history: boolean[] }) {
       width={totalW}
       height={h}
       viewBox={`0 0 ${totalW} ${h}`}
-      style={{ flexShrink: 0 }}
+      style={{ flexShrink: 1, maxWidth: totalW, overflow: "hidden" }}
     >
       {history.map((done, i) => (
         <rect
