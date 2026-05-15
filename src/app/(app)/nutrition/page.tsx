@@ -1285,7 +1285,7 @@ export default function NutritionPage() {
       </div>
 
       {/* ─── Calorie + Macros Summary ─── */}
-      <div className="card" style={{ padding: isMobile ? 16 : 28 }}>
+      <div className="card" style={{ padding: isMobile ? 16 : 28, overflow: "visible" }}>
         <div style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "1fr auto 1fr",
@@ -1335,7 +1335,7 @@ export default function NutritionPage() {
         {/* 4 Macro Rings */}
         <div style={{
           display: "flex", justifyContent: "space-around",
-          marginTop: isMobile ? 20 : 28, paddingTop: 20,
+          marginTop: isMobile ? 20 : 28, paddingTop: 20, paddingBottom: 4,
           borderTop: "1px solid var(--border)",
         }}>
           <MacroRing value={dayTotals.protein} max={profile.targetProtein}
