@@ -646,7 +646,7 @@ function AddFoodModal({
     <Modal open={open} onClose={onClose} title={`Anadir a ${MEAL_SLOTS.find((m) => m.key === meal)?.label ?? meal}`}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {/* Search */}
-        <div style={{ position: "relative" }}>
+        <div>
           <label className="t-label" style={{ display: "block", marginBottom: 6 }}>Alimento</label>
           <div style={{ position: "relative" }}>
             <input className="input" placeholder="Buscar alimento..."
@@ -660,9 +660,8 @@ function AddFoodModal({
 
           {suggestions.length > 0 && (
             <div style={{
-              position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50,
-              background: "var(--bg-card)", border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm)", marginTop: 4, maxHeight: 200, overflowY: "auto",
+              background: "var(--bg-raised)", border: "1px solid var(--border-mid)",
+              borderRadius: "var(--radius-sm)", marginTop: 4, maxHeight: 220, overflowY: "auto",
             }}>
               {suggestions.map((s, idx) => {
                 const isCustom = !("category" in s);
@@ -671,7 +670,7 @@ function AddFoodModal({
                     style={{
                       display: "flex", justifyContent: "space-between", alignItems: "center",
                       width: "100%", padding: "10px 14px", border: "none",
-                      background: "none", cursor: "pointer", textAlign: "left",
+                      background: "var(--bg-raised)", cursor: "pointer", textAlign: "left",
                       borderBottom: "1px solid var(--border)",
                     }}>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-hi)", display: "flex", alignItems: "center", gap: 6 }}>

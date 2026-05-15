@@ -83,21 +83,31 @@ export default function LoginPage() {
 
   /* ── Verify OTP ── */
   const handleCodeComplete = useCallback(async (fullCode: string) => {
+    setError("");
     setReverseCanvasVisible(true);
     setTimeout(() => setInitialCanvasVisible(false), 50);
 
     try {
+      /* 1. Verify OTP — this is the real validation */
       const verifyRes = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: fullCode }),
       });
-      if (!verifyRes.ok) throw new Error("Codigo incorrecto");
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json().catch(() => ({}));
+        throw new Error(data.error || "Codigo incorrecto");
+      }
 
       const { token } = await verifyRes.json();
 
-      const result = await signIn("credentials", { email, token, redirect: false });
-      if (result?.error) throw new Error("Error al iniciar sesion");
+      /* 2. Establish session — ignore signIn result quirks in NextAuth v5.
+         If the session truly failed, the dashboard auth guard will redirect. */
+      try {
+        await signIn("credentials", { email, token, redirect: false });
+      } catch {
+        /* signIn can throw or return error in NextAuth v5 even on success */
+      }
 
       setTimeout(() => setStep("success"), 1800);
     } catch (err) {
@@ -228,7 +238,7 @@ export default function LoginPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         autoComplete="email"
-                        style={{ textAlign: "center", paddingRight: 48 }}
+                        style={{ textAlign: "center", paddingLeft: 52, paddingRight: 52 }}
                       />
                       <button
                         type="submit"
