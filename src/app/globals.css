@@ -742,6 +742,21 @@ select.input {
 
 /* === MOBILE === */
 @media (max-width: 768px) {
+  /* ── Contrast boost for mobile screens ── */
+  :root {
+    --text-lo:    rgba(255,255,255,0.45);
+    --text-mid:   rgba(255,255,255,0.68);
+    --border:     rgba(255,255,255,0.12);
+    --border-mid: rgba(255,255,255,0.20);
+    --border-hi:  rgba(255,255,255,0.34);
+  }
+  .t-label { color: rgba(255,255,255,0.50); }
+  .badge-dim { color: rgba(255,255,255,0.60); border-color: rgba(255,255,255,0.14); }
+  .nav-item { color: rgba(255,255,255,0.60); }
+  .input::placeholder { color: rgba(255,255,255,0.40); }
+  .progress-bar { background: rgba(255,255,255,0.12); }
+  .check { border-color: rgba(255,255,255,0.22); }
+
   .login-nav { padding: 8px 14px; gap: 12px; top: 12px; width: calc(100% - 24px); justify-content: space-between; }
   .login-nav-links { display: none; }
   .login-nav-btn { padding: 5px 10px; font-size: 10px; }

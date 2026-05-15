@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useIsMobile } from "@/src/hooks/use-mobile";
 import { usePlan } from "@/src/hooks/use-plan";
 import { PremiumWall } from "@/src/components/ui/premium-wall";
@@ -448,6 +448,9 @@ function AddFoodModal({
   const [suggestions, setSuggestions] = useState<FoodItem[]>([]);
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [customKcal, setCustomKcal] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   // Search food database
   useEffect(() => {
@@ -458,6 +461,33 @@ function AddFoodModal({
     ).slice(0, 8);
     setSuggestions(matches);
   }, [query]);
+
+  /** Resize picked/captured image to a small data URL */
+  const handlePhoto = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX = 480;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h = (h * MAX) / w; w = MAX; } }
+        else { if (h > MAX) { w = (w * MAX) / h; h = MAX; } }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        setPhotoUrl(canvas.toDataURL("image/webp", 0.75));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
+  }, []);
 
   const selectSuggestion = (food: FoodItem) => {
     setSelectedFood(food);
@@ -507,6 +537,7 @@ function AddFoodModal({
         body.carbs = preview.carbs;
         body.fat = preview.fat;
       }
+      if (photoUrl) body.photoUrl = photoUrl;
       const res = await fetch("/api/nutrition/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -515,7 +546,7 @@ function AddFoodModal({
       if (res.ok) {
         onAdded();
         onClose();
-        setQuery(""); setName(""); setGrams(""); setSelectedFood(null); setCustomKcal("");
+        setQuery(""); setName(""); setGrams(""); setSelectedFood(null); setCustomKcal(""); setPhotoUrl(null);
       }
     } finally {
       setSaving(false);
@@ -583,6 +614,44 @@ function AddFoodModal({
               value={customKcal} onChange={(e) => setCustomKcal(e.target.value)} />
           </div>
         )}
+
+        {/* Photo capture */}
+        <div>
+          <label className="t-label" style={{ display: "block", marginBottom: 6 }}>Foto (opcional)</label>
+          {photoUrl ? (
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <img src={photoUrl} alt="Foto" style={{
+                width: 80, height: 80, borderRadius: "var(--radius-sm)",
+                objectFit: "cover", border: "1px solid var(--border)",
+              }} />
+              <button onClick={() => setPhotoUrl(null)} style={{
+                position: "absolute", top: -6, right: -6,
+                width: 20, height: 20, borderRadius: "50%",
+                background: "var(--bg-surface)", border: "1px solid var(--border-mid)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", padding: 0,
+              }}>
+                <Icon name="x" size={10} color="var(--text-mid)" />
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }}
+                onClick={() => cameraRef.current?.click()}>
+                <Icon name="camera" size={14} /> Camara
+              </button>
+              <button className="btn btn-ghost" style={{ flex: 1, justifyContent: "center" }}
+                onClick={() => galleryRef.current?.click()}>
+                <Icon name="plus" size={14} /> Galeria
+              </button>
+            </div>
+          )}
+          {/* Hidden file inputs */}
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment"
+            onChange={handlePhoto} style={{ display: "none" }} />
+          <input ref={galleryRef} type="file" accept="image/*"
+            onChange={handlePhoto} style={{ display: "none" }} />
+        </div>
 
         {/* Preview */}
         {preview && (
