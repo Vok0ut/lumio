@@ -262,8 +262,10 @@ export const FOOD_DATABASE: FoodItem[] = [
   { name: "Kebab de ternera (pita)", kcal: 200, protein: 9.5, carbs: 18, fat: 8.5, fiber: 1.3, category: "fast_food", unitName: "unidad", unitGrams: 380 },
   // Durum kebab de pollo: 400g → 800 kcal (fuente: beirutista.es)
   { name: "Durum kebab de pollo", kcal: 200, protein: 8.75, carbs: 20, fat: 7.5, fiber: 1.25, category: "fast_food", unitName: "unidad", unitGrams: 400 },
-  // Durum kebab mixto: 420g → 880 kcal
-  { name: "Durum kebab mixto", kcal: 210, protein: 9.5, carbs: 21, fat: 8.5, fiber: 1.2, category: "fast_food", unitName: "unidad", unitGrams: 420 },
+  // Durum kebab de ternera: 420g → 900 kcal (más grasa que pollo)
+  { name: "Durum kebab de ternera", kcal: 214, protein: 9, carbs: 20, fat: 9.5, fiber: 1.2, category: "fast_food", unitName: "unidad", unitGrams: 420 },
+  // Durum kebab mixto (pollo + ternera): 430g → 920 kcal
+  { name: "Durum kebab mixto", kcal: 214, protein: 9.3, carbs: 20, fat: 9, fiber: 1.2, category: "fast_food", unitName: "unidad", unitGrams: 430 },
   // Shawarma de pollo: 300g → 555 kcal
   { name: "Shawarma de pollo", kcal: 185, protein: 17, carbs: 18, fat: 5, fiber: 1.5, category: "fast_food", unitName: "unidad", unitGrams: 300 },
   // Falafel (4 bolas): 80g → 267 kcal
