@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android / Bubblewrap (keep locally, don't affect Vercel)
+/app/
+/gradle/
+/gradlew
+/gradlew.bat
+/build.gradle
+/settings.gradle
+/twa-manifest.json
+/manifest-checksum.txt
+/store_icon.png
+/android.keystore
