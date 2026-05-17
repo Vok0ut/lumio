@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { RedeemCodeSchema } from "@/src/lib/validations";
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = RedeemCodeSchema.safeParse(body);
@@ -52,4 +55,5 @@ export async function POST(req: NextRequest) {
   ]);
 
   return NextResponse.json({ ok: true, plan: "PREMIUM" });
+  } catch (e) { console.error("[POST /api/user/redeem-code]", e); return serverError(); }
 }

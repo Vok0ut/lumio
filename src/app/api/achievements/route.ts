@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { SKILL_TREE } from "@/src/lib/gamification";
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const xpLogs = await prisma.xpLog.findMany({
     where: { userId },
@@ -75,4 +78,5 @@ export async function GET() {
     skillTree: skillLevels,
     badges,
   });
+  } catch (e) { console.error("[GET /api/achievements]", e); return serverError(); }
 }

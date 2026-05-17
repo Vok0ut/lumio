@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest, grantXp, isPremium, premiumRequired } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, grantXp, isPremium, premiumRequired, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { CreateJournalSchema } from "@/src/lib/validations";
 
 export async function GET(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
   if (!(await isPremium(userId))) return premiumRequired();
 
   const { searchParams } = new URL(req.url);
@@ -29,11 +32,15 @@ export async function GET(req: NextRequest) {
     page,
     totalPages: Math.ceil(total / limit),
   });
+  } catch (e) { console.error("[GET /api/journal]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateJournalSchema.safeParse(body);
@@ -52,4 +59,5 @@ export async function POST(req: NextRequest) {
   await grantXp(userId, "journal");
 
   return NextResponse.json(entry, { status: 201 });
+  } catch (e) { console.error("[POST /api/journal]", e); return serverError(); }
 }

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, serverError, checkRateLimit } from "@/src/lib/api-utils";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await params;
 
@@ -17,4 +20,5 @@ export async function GET(
   }
 
   return NextResponse.json(entry);
+  } catch (e) { console.error("[GET /api/journal/[id]]", e); return serverError(); }
 }

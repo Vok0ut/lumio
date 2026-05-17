@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { z } from "zod";
 
 const CreateTemplateSchema = z.object({
@@ -19,8 +19,11 @@ const CreateTemplateSchema = z.object({
 });
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const templates = await prisma.mealTemplate.findMany({
     where: { userId },
@@ -33,11 +36,15 @@ export async function GET() {
       foods: JSON.parse(t.foods),
     })),
   });
+  } catch (e) { console.error("[GET /api/nutrition/templates]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateTemplateSchema.safeParse(body);
@@ -55,11 +62,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     template: { ...template, foods: parsed.data.foods },
   });
+  } catch (e) { console.error("[POST /api/nutrition/templates]", e); return serverError(); }
 }
 
 export async function DELETE(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await req.json();
   if (!id) return badRequest("ID requerido");
@@ -71,4 +82,5 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.mealTemplate.delete({ where: { id } });
   return NextResponse.json({ ok: true });
+  } catch (e) { console.error("[DELETE /api/nutrition/templates]", e); return serverError(); }
 }

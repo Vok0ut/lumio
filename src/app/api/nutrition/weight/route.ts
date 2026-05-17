@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { z } from "zod";
 
 const LogWeightSchema = z.object({
@@ -9,8 +9,11 @@ const LogWeightSchema = z.object({
 });
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const logs = await prisma.weightLog.findMany({
     where: { userId },
@@ -19,11 +22,15 @@ export async function GET() {
   });
 
   return NextResponse.json({ logs });
+  } catch (e) { console.error("[GET /api/nutrition/weight]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = LogWeightSchema.safeParse(body);
@@ -44,4 +51,5 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ log });
+  } catch (e) { console.error("[POST /api/nutrition/weight]", e); return serverError(); }
 }

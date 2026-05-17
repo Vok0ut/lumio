@@ -17,7 +17,13 @@ interface RateLimiter {
 
 function createNoopLimiter(): RateLimiter {
   return {
-    limit: async () => ({ success: true, reset: Date.now() + 60000 }),
+    limit: async () => {
+      if (process.env.NODE_ENV === "production") {
+        console.error("[RateLimit] Redis is required in production but not configured — denying request");
+        return { success: false, reset: Date.now() + 60000 };
+      }
+      return { success: true, reset: Date.now() + 60000 };
+    },
   };
 }
 

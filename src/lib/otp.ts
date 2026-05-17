@@ -22,6 +22,10 @@ function getRedis(): Redis | null {
 export async function storeOtp(email: string, code: string): Promise<boolean> {
   const redis = getRedis();
   if (!redis) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[OTP] Redis is required in production but not configured");
+      return false;
+    }
     console.log(`[OTP-DEV] ${email}: ${code}`);
     return true;
   }
@@ -41,8 +45,14 @@ export async function verifyOtp(
   const redis = getRedis();
 
   if (!redis) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[OTP] Redis is required in production but not configured");
+      return null;
+    }
+    // dev fallback: accept code "000000"
+    if (code !== "000000") return null;
     const token = randomBytes(32).toString("hex");
-    return token; // dev fallback
+    return token;
   }
 
   const raw = await redis.get<string | number>(`${OTP_PREFIX}${email}`);
@@ -65,7 +75,13 @@ export async function consumeVerifyToken(
   token: string
 ): Promise<boolean> {
   const redis = getRedis();
-  if (!redis) return true; // dev fallback
+  if (!redis) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[OTP] Redis is required in production but not configured");
+      return false;
+    }
+    return true; // dev fallback
+  }
 
   const stored = await redis.get<string>(`${VERIFY_PREFIX}${email}`);
   if (!stored || !safeEqual(stored, token)) return false;

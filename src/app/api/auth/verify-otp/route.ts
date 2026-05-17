@@ -4,6 +4,7 @@ import { verifyOtp } from "@/src/lib/otp";
 import { getOtpByEmail } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  try {
   const body = await req.json();
   const parsed = VerifyOtpSchema.safeParse(body);
   if (!parsed.success) {
@@ -32,4 +33,5 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, email, token });
+  } catch (e) { console.error("[POST /api/auth/verify-otp]", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }

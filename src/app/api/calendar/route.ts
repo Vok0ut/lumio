@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { CreateCalendarEventSchema } from "@/src/lib/validations";
 
 export async function GET(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { searchParams } = new URL(req.url);
   const start = searchParams.get("start");
@@ -35,11 +38,15 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(events);
+  } catch (e) { console.error("[GET /api/calendar]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateCalendarEventSchema.safeParse(body);
@@ -55,4 +62,5 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(event, { status: 201 });
+  } catch (e) { console.error("[POST /api/calendar]", e); return serverError(); }
 }

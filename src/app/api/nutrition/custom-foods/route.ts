@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { z } from "zod";
 
 const CreateCustomFoodSchema = z.object({
@@ -10,12 +10,15 @@ const CreateCustomFoodSchema = z.object({
   carbs: z.number().min(0).default(0),
   fat: z.number().min(0).default(0),
   fiber: z.number().min(0).default(0),
-  labelPhoto: z.string().max(500000).optional(),
+  labelPhoto: z.string().max(2000).optional(), // URL only — use object storage for images
 });
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const foods = await prisma.customFood.findMany({
     where: { userId },
@@ -33,11 +36,15 @@ export async function GET() {
   });
 
   return NextResponse.json({ foods });
+  } catch (e) { console.error("[GET /api/nutrition/custom-foods]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateCustomFoodSchema.safeParse(body);
@@ -57,11 +64,15 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ food });
+  } catch (e) { console.error("[POST /api/nutrition/custom-foods]", e); return serverError(); }
 }
 
 export async function DELETE(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await req.json();
   if (!id) return badRequest("ID requerido");
@@ -73,4 +84,5 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.customFood.delete({ where: { id } });
   return NextResponse.json({ ok: true });
+  } catch (e) { console.error("[DELETE /api/nutrition/custom-foods]", e); return serverError(); }
 }

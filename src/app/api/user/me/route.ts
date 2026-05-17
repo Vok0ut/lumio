@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { getLevelFromXP, getRankForLevel } from "@/src/lib/gamification";
 import { UpdateProfileSchema } from "@/src/lib/validations";
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -61,11 +64,15 @@ export async function GET() {
     recentXpLogs,
     createdAt: user.createdAt,
   });
+  } catch (e) { console.error("[GET /api/user/me]", e); return serverError(); }
 }
 
 export async function PATCH(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = UpdateProfileSchema.safeParse(body);
@@ -86,4 +93,5 @@ export async function PATCH(req: NextRequest) {
   });
 
   return NextResponse.json(updated);
+  } catch (e) { console.error("[PATCH /api/user/me]", e); return serverError(); }
 }

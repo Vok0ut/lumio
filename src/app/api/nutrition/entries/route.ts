@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { estimateNutrition } from "@/src/lib/nutrition";
 import { z } from "zod";
 
@@ -14,7 +14,7 @@ const CreateEntrySchema = z.object({
   carbs: z.number().min(0).optional(),
   fat: z.number().min(0).optional(),
   fiber: z.number().min(0).optional(),
-  photoUrl: z.string().max(500000).optional(),
+  photoUrl: z.string().max(2000).optional(), // URL only — use object storage for images
 });
 
 const DeleteEntrySchema = z.object({
@@ -23,8 +23,11 @@ const DeleteEntrySchema = z.object({
 
 /** GET — fetch entries for a date (or date range) */
 export async function GET(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
@@ -52,12 +55,16 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ entries });
+  } catch (e) { console.error("[GET /api/nutrition/entries]", e); return serverError(); }
 }
 
 /** POST — create a food entry */
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateEntrySchema.safeParse(body);
@@ -99,12 +106,16 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ entry });
+  } catch (e) { console.error("[POST /api/nutrition/entries]", e); return serverError(); }
 }
 
 /** DELETE — remove a food entry */
 export async function DELETE(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = DeleteEntrySchema.safeParse(body);
@@ -118,4 +129,5 @@ export async function DELETE(req: NextRequest) {
   await prisma.foodEntry.delete({ where: { id: parsed.data.id } });
 
   return NextResponse.json({ ok: true });
+  } catch (e) { console.error("[DELETE /api/nutrition/entries]", e); return serverError(); }
 }

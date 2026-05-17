@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import {
   calcBMR,
   calcTDEE,
@@ -18,19 +18,26 @@ const CreateProfileSchema = z.object({
 });
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const profile = await prisma.nutritionProfile.findUnique({
     where: { userId },
   });
 
   return NextResponse.json({ profile });
+  } catch (e) { console.error("[GET /api/nutrition/profile]", e); return serverError(); }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const body = await req.json();
   const parsed = CreateProfileSchema.safeParse(body);
@@ -86,4 +93,5 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ profile });
+  } catch (e) { console.error("[POST /api/nutrition/profile]", e); return serverError(); }
 }

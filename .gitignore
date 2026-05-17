@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Claude Code local settings (may contain sensitive env refs)
+.claude/settings.local.json
+
 # Android / Bubblewrap (keep locally, don't affect Vercel)
 /app/
 /gradle/

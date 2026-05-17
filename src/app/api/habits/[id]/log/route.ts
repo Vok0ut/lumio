@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest, grantXp } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, grantXp, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { LogHabitSchema } from "@/src/lib/validations";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await params;
   const body = await req.json();
@@ -76,4 +79,5 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true, xpGranted });
+  } catch (e) { console.error("[PATCH /api/habits/[id]/log]", e); return serverError(); }
 }

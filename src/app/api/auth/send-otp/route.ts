@@ -6,6 +6,7 @@ import { sendOtpEmail } from "@/src/lib/email";
 import { getOtpByIp, getOtpByEmail } from "@/src/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  try {
   const body = await req.json();
   const parsed = SendOtpSchema.safeParse(body);
   if (!parsed.success) {
@@ -35,8 +36,16 @@ export async function POST(req: NextRequest) {
 
   const code = String(randomInt(100000, 999999));
 
-  await storeOtp(email, code);
+  const stored = await storeOtp(email, code);
+  if (!stored) {
+    return NextResponse.json(
+      { error: "Servicio no disponible. Intenta de nuevo." },
+      { status: 503 }
+    );
+  }
+
   await sendOtpEmail(email, code);
 
   return NextResponse.json({ ok: true });
+  } catch (e) { console.error("[POST /api/auth/send-otp]", e); return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
 }

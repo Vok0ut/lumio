@@ -12,8 +12,14 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().default(""),
     GMAIL_USER: z.string().default(""),
     GMAIL_APP_PASSWORD: z.string().default(""),
-    UPSTASH_REDIS_REST_URL: z.string().default(""),
-    UPSTASH_REDIS_REST_TOKEN: z.string().default(""),
+    UPSTASH_REDIS_REST_URL:
+      process.env.NODE_ENV === "production"
+        ? z.string().url("Redis URL is required in production")
+        : z.string().default(""),
+    UPSTASH_REDIS_REST_TOKEN:
+      process.env.NODE_ENV === "production"
+        ? z.string().min(1, "Redis token is required in production")
+        : z.string().default(""),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),

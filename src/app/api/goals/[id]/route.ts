@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized, badRequest, grantXp } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, badRequest, grantXp, serverError, checkRateLimit } from "@/src/lib/api-utils";
 import { UpdateGoalSchema } from "@/src/lib/validations";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await params;
   const body = await req.json();
@@ -73,14 +76,18 @@ export async function PATCH(
   });
 
   return NextResponse.json({ ...updated, xpGranted });
+  } catch (e) { console.error("[PATCH /api/goals/[id]]", e); return serverError(); }
 }
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const { id } = await params;
 
@@ -91,4 +98,5 @@ export async function DELETE(
 
   await prisma.goal.delete({ where: { id } });
   return NextResponse.json({ ok: true });
+  } catch (e) { console.error("[DELETE /api/goals/[id]]", e); return serverError(); }
 }

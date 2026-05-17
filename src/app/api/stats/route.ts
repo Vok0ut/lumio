@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getSessionUserId, unauthorized } from "@/src/lib/api-utils";
+import { getSessionUserId, unauthorized, serverError, checkRateLimit } from "@/src/lib/api-utils";
 
 export async function GET() {
+  try {
   const userId = await getSessionUserId();
   if (!userId) return unauthorized();
+  const limited = await checkRateLimit(userId);
+  if (limited) return limited;
 
   const now = new Date();
   const sevenDaysAgo = new Date(now);
@@ -102,4 +105,5 @@ export async function GET() {
     monthlyActivity,
     totalHabits: habits,
   });
+  } catch (e) { console.error("[GET /api/stats]", e); return serverError(); }
 }
