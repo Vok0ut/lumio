@@ -1,23 +1,7 @@
 /* ═══════════════════════════════════════════════
    LUMIO — DARK PROFESSIONAL UI
+   Fonts: Geist Sans + Geist Mono (loaded via next/font in layout.tsx)
    ═══════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap');
-
-@font-face {
-  font-family: 'PP Neue Montreal';
-  src: url('https://cdn.jsdelivr.net/npm/@fontsource/neue-montreal@5.0.1/files/neue-montreal-latin-400-normal.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'PP Neue Montreal';
-  src: url('https://cdn.jsdelivr.net/npm/@fontsource/neue-montreal@5.0.1/files/neue-montreal-latin-500-normal.woff2') format('woff2');
-  font-weight: 500; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'PP Neue Montreal';
-  src: url('https://cdn.jsdelivr.net/npm/@fontsource/neue-montreal@5.0.1/files/neue-montreal-latin-700-normal.woff2') format('woff2');
-  font-weight: 700; font-style: normal; font-display: swap;
-}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -56,9 +40,9 @@
   --dark-mid:   #7A7975;
   --dark:       #2A2927;
   --black:      #090909;
-  --font-sans:  'PP Neue Montreal', 'Syne', sans-serif;
-  --font-display: 'PP Neue Montreal', 'Syne', sans-serif;
-  --font-mono:  'JetBrains Mono', monospace;
+  --font-sans:    var(--font-geist-sans), system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, monospace;
   --radius-xl:  20px;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out:   cubic-bezier(0.76, 0, 0.24, 1);
@@ -70,7 +54,7 @@ html, body {
   width: 100%; height: 100%;
   background: var(--bg-base);
   color: var(--text-hi);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.5;
   overflow: hidden;
