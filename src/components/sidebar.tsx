@@ -99,12 +99,12 @@ export function Sidebar({ level, xpProgress, rankName }: SidebarProps) {
                 fontSize: 11,
                 fontWeight: 700,
                 fontFamily: "var(--font-sans)",
-                color: "var(--text-hi)",
+                color: "var(--xp)",
               }}
             >
               Nivel {level}
             </div>
-            <div style={{ fontSize: 9, color: "var(--text-lo)" }}>
+            <div style={{ fontSize: 9, color: "var(--text-lo)", marginTop: 1 }}>
               {rankName}
             </div>
           </div>

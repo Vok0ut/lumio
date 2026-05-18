@@ -87,7 +87,7 @@ function Skeleton({ width, height }: { width: string | number; height: number })
 
 /* ── XP Ring ───────────────────────────────────── */
 
-function XpRing({ value, max, size = 56, stroke = 4 }: { value: number; max: number; size?: number; stroke?: number }) {
+function XpRing({ value, max, size = 56, stroke = 4, color = "var(--xp)" }: { value: number; max: number; size?: number; stroke?: number; color?: string }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
@@ -97,18 +97,19 @@ function XpRing({ value, max, size = 56, stroke = 4 }: { value: number; max: num
         <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2} cy={size / 2} r={r}
-          stroke="var(--accent)" strokeWidth={stroke} fill="none"
+          stroke={color} strokeWidth={stroke} fill="none"
           strokeDasharray={`${c * pct} ${c}`}
           strokeLinecap="round"
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ filter: "drop-shadow(0 0 4px rgba(232,230,223,0.3))", transition: "stroke-dasharray 0.5s ease" }}
+          style={{ filter: `drop-shadow(0 0 5px ${color})`, transition: "stroke-dasharray 0.5s ease" }}
         />
       </svg>
       <div style={{
         position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: "var(--font-sans)", fontSize: 18, fontWeight: 500, letterSpacing: "-0.02em",
+        fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em",
+        color,
       }}>
-        {Math.round(pct * 100)}<span style={{ fontSize: 9, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginLeft: 1 }}>%</span>
+        {Math.round(pct * 100)}<span style={{ fontSize: 8, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginLeft: 1 }}>%</span>
       </div>
     </div>
   );
@@ -116,7 +117,19 @@ function XpRing({ value, max, size = 56, stroke = 4 }: { value: number; max: num
 
 /* ── Spark with area fill ─────────────────────── */
 
-function Spark({ data, accent = false, w = 100, h = 36 }: { data: number[]; accent?: boolean; w?: number; h?: number }) {
+function Spark({
+  data,
+  color = "rgba(255,255,255,0.35)",
+  gradId = "sg-def",
+  w = 100,
+  h = 36,
+}: {
+  data: number[];
+  color?: string;
+  gradId?: string;
+  w?: number;
+  h?: number;
+}) {
   if (data.length < 2) return null;
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
@@ -126,18 +139,17 @@ function Spark({ data, accent = false, w = 100, h = 36 }: { data: number[]; acce
   const linePath = points.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
   const areaPath = linePath + ` L${w} ${h} L0 ${h} Z`;
   const last = points[points.length - 1];
-  const id = accent ? "sga" : "sg";
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ width: w, height: h }}>
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ width: w, height: h, overflow: "visible" }}>
       <defs>
-        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={accent ? "var(--accent)" : "#fff"} stopOpacity={accent ? 0.25 : 0.12} />
-          <stop offset="100%" stopColor={accent ? "var(--accent)" : "#fff"} stopOpacity={0} />
+        <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
-      <path d={areaPath} fill={`url(#${id})`} opacity={0.6} />
-      <path d={linePath} fill="none" stroke={accent ? "var(--accent)" : "var(--text-lo)"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={last[0]} cy={last[1]} r="2.5" fill={accent ? "var(--accent)" : "#fff"} />
+      <path d={areaPath} fill={`url(#${gradId})`} opacity={0.7} />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={last[0]} cy={last[1]} r="2.5" fill={color} />
     </svg>
   );
 }
@@ -236,11 +248,11 @@ function HeroStrip({ profile, isMobile }: { profile: UserProfile | null; isMobil
         <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 12 : 16, width: isMobile ? "100%" : "auto" }}>
           <div style={{
             width: isMobile ? 44 : 52, height: isMobile ? 44 : 52, borderRadius: 12,
-            background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-mid)",
+            background: "var(--xp-lo)", border: "1px solid var(--xp-mid)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: isMobile ? 15 : 18,
-            color: "var(--accent)", flexShrink: 0,
-            boxShadow: "inset 0 0 30px rgba(232,230,223,0.04)",
+            fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: isMobile ? 15 : 18,
+            color: "var(--xp)", flexShrink: 0,
+            boxShadow: "0 0 20px var(--xp-lo), inset 0 0 20px rgba(196,145,58,0.05)",
           }}>
             {String(level).padStart(2, "0")}
           </div>
@@ -248,16 +260,16 @@ function HeroStrip({ profile, isMobile }: { profile: UserProfile | null; isMobil
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em", color: "var(--text-lo)", textTransform: "uppercase" as const, marginBottom: 4 }}>
               Nivel actual
             </div>
-            <div style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 14 : 16, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--text-hi)", marginBottom: 8 }}>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 14 : 17, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--text-hi)", marginBottom: 8 }}>
               {rank.name}
             </div>
             <div style={{ width: isMobile ? "100%" : 280 }}>
               <div className="progress-bar" style={{ height: 6 }}>
-                <div className="progress-fill" style={{ width: `${pct}%`, boxShadow: "0 0 10px rgba(232,230,223,0.3)" }} />
+                <div className="progress-fill" style={{ width: `${pct}%` }} />
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)", flexWrap: "wrap" as const, gap: 4 }}>
-                <span>{currentLevelXP} / {xpToNextLevel} XP</span>
-                <span>LVL {String(level + 1).padStart(2, "0")}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)", flexWrap: "wrap" as const, gap: 4 }}>
+                <span style={{ color: "var(--xp)" }}>{currentLevelXP}</span>
+                <span>/ {xpToNextLevel} XP · LVL {String(level + 1).padStart(2, "0")}</span>
               </div>
             </div>
           </div>
@@ -265,18 +277,15 @@ function HeroStrip({ profile, isMobile }: { profile: UserProfile | null; isMobil
 
         {/* Right: XP stats */}
         <div style={{ display: "flex", gap: 20 }}>
-          {[
-            { label: "Total", value: totalXp >= 1000 ? `${(totalXp / 1000).toFixed(1)}k` : String(totalXp) },
-          ].map((s) => (
-            <div key={s.label} style={{ textAlign: "right" as const }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em", color: "var(--text-lo)", textTransform: "uppercase" as const }}>
-                {s.label}
-              </div>
-              <div style={{ fontFamily: "var(--font-sans)", fontSize: 20, letterSpacing: "-0.02em", marginTop: 2, color: "var(--text-hi)" }}>
-                {s.value}<span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginLeft: 2 }}>xp</span>
-              </div>
+          <div style={{ textAlign: "right" as const }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em", color: "var(--text-lo)", textTransform: "uppercase" as const }}>
+              Total
             </div>
-          ))}
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: 22, fontWeight: 600, letterSpacing: "-0.03em", marginTop: 2, color: "var(--xp)" }}>
+              {totalXp >= 1000 ? `${(totalXp / 1000).toFixed(1)}k` : String(totalXp)}
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginLeft: 3 }}>xp</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -453,7 +462,8 @@ function HeatmapPanel({ data, isMobile }: { data: number[]; isMobile: boolean })
         {data.map((v, i) => (
           <div key={i} title={`Dia ${i + 1}: ${v} actividades`} style={{
             aspectRatio: "1", borderRadius: 3,
-            background: "var(--accent)", opacity: cellOpacity(v),
+            background: v > 0 ? "var(--xp)" : "rgba(255,255,255,0.05)",
+            opacity: cellOpacity(v),
             transition: "opacity 0.2s",
           }} />
         ))}
@@ -465,7 +475,7 @@ function HeatmapPanel({ data, isMobile }: { data: number[]; isMobile: boolean })
       }}>
         <span>menos</span>
         {[0.06, 0.2, 0.4, 0.65, 0.9].map((op, i) => (
-          <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: "var(--accent)", opacity: op }} />
+          <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: op > 0.1 ? "var(--xp)" : "rgba(255,255,255,0.05)", opacity: op > 0.1 ? op : 1 }} />
         ))}
         <span>mas</span>
       </div>
@@ -647,17 +657,19 @@ export default function DashboardPage() {
           <TiltCard style={{ padding: isMobile ? 14 : 18 }} max={4} scale={1.01}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span className="t-label">Habitos</span>
-              <span className="badge badge-dim" style={{ fontSize: 9 }}>
-                {habitsDone > (stats.dailyHabits[stats.dailyHabits.length - 2] ?? 0)
-                  ? `+${habitsDone - (stats.dailyHabits[stats.dailyHabits.length - 2] ?? 0)} vs ayer`
-                  : `${habitsDone}/${habitsTotal}`}
+              <span className={`badge ${habitsDone > 0 ? "badge-success" : "badge-dim"}`} style={{ fontSize: 9 }}>
+                {habitsDone}/{habitsTotal}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                {habitsDone}<span style={{ fontSize: 14, color: "var(--text-lo)", marginLeft: 2 }}>/{habitsTotal}</span>
+              <span style={{
+                fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 500,
+                letterSpacing: "-0.03em", lineHeight: 1,
+                color: habitsDone > 0 ? "var(--success)" : "var(--text-hi)",
+              }}>
+                {habitsDone}<span style={{ fontSize: 14, color: "var(--text-lo)", marginLeft: 2, fontWeight: 400 }}>/{habitsTotal}</span>
               </span>
-              <Spark data={stats.dailyHabits} w={isMobile ? 60 : 90} h={32} />
+              <Spark data={stats.dailyHabits} color="var(--success)" gradId="sg-success" w={isMobile ? 60 : 90} h={32} />
             </div>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginTop: 10 }}>
               {habitsDone} de {habitsTotal} completados hoy
@@ -673,10 +685,13 @@ export default function DashboardPage() {
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                {tasksDone}<span style={{ fontSize: 14, color: "var(--text-lo)", marginLeft: 2 }}>/{tasksTotal}</span>
+              <span style={{
+                fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 500,
+                letterSpacing: "-0.03em", lineHeight: 1,
+              }}>
+                {tasksDone}<span style={{ fontSize: 14, color: "var(--text-lo)", marginLeft: 2, fontWeight: 400 }}>/{tasksTotal}</span>
               </span>
-              <Spark data={stats.dailyXp} w={isMobile ? 60 : 90} h={32} />
+              <Spark data={stats.dailyXp} color="rgba(255,255,255,0.3)" gradId="sg-tasks" w={isMobile ? 60 : 90} h={32} />
             </div>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginTop: 10 }}>
               {tasksTotal - tasksDone} quedan para hoy
@@ -687,15 +702,18 @@ export default function DashboardPage() {
           <TiltCard style={{ padding: isMobile ? 14 : 18 }} max={4} scale={1.01}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span className="t-label">XP semanal</span>
-              <span className="badge badge-dim" style={{ fontSize: 9, color: "var(--accent)", background: "rgba(232,230,223,0.06)", borderColor: "rgba(232,230,223,0.12)" }}>
+              <span className="badge badge-xp" style={{ fontSize: 9 }}>
                 +{stats.weeklyXp > 0 ? Math.round((stats.dailyXp[6] / (stats.weeklyXp || 1)) * 100) : 0}% hoy
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1 }}>
+              <span style={{
+                fontFamily: "var(--font-sans)", fontSize: isMobile ? 28 : 36, fontWeight: 500,
+                letterSpacing: "-0.03em", lineHeight: 1, color: "var(--xp)",
+              }}>
                 {stats.weeklyXp}
               </span>
-              <Spark data={stats.dailyXp} accent w={isMobile ? 60 : 90} h={32} />
+              <Spark data={stats.dailyXp} color="var(--xp)" gradId="sg-xp" w={isMobile ? 60 : 90} h={32} />
             </div>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)", marginTop: 10 }}>
               objetivo semanal · 250 XP
@@ -706,16 +724,24 @@ export default function DashboardPage() {
           <TiltCard style={{ padding: isMobile ? 14 : 18 }} max={4} scale={1.01}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span className="t-label">Racha</span>
-              <span className="badge badge-dim" style={{ fontSize: 9 }}>
+              <span className={`badge ${stats.currentStreak > 0 ? "badge-streak" : "badge-dim"}`} style={{ fontSize: 9 }}>
                 {stats.currentStreak > 0 ? "hoy ✓" : "hoy ✗"}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <XpRing value={stats.currentStreak % 7 || (stats.currentStreak > 0 ? 7 : 0)} max={7} size={isMobile ? 48 : 56} />
+              <XpRing
+                value={stats.currentStreak % 7 || (stats.currentStreak > 0 ? 7 : 0)}
+                max={7}
+                size={isMobile ? 48 : 56}
+                color="var(--streak)"
+              />
               <div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-lo)", letterSpacing: "0.1em" }}>SEMANA</div>
-                <div style={{ fontFamily: "var(--font-sans)", fontSize: isMobile ? 20 : 26, fontWeight: 400, letterSpacing: "-0.02em", marginTop: 2 }}>
-                  {stats.currentStreak}<span style={{ fontSize: 12, color: "var(--text-lo)", marginLeft: 3 }}>dias</span>
+                <div style={{
+                  fontFamily: "var(--font-sans)", fontSize: isMobile ? 20 : 26, fontWeight: 600,
+                  letterSpacing: "-0.02em", marginTop: 2, color: "var(--streak)",
+                }}>
+                  {stats.currentStreak}<span style={{ fontSize: 12, color: "var(--text-lo)", marginLeft: 3, fontWeight: 400 }}>dias</span>
                 </div>
               </div>
             </div>

@@ -87,7 +87,7 @@ function MicroHistory({ history }: { history: boolean[] }) {
           width={barW}
           height={done ? h : h * 0.4}
           rx={1}
-          fill={done ? "var(--accent)" : "rgba(255,255,255,0.08)"}
+          fill={done ? "var(--success)" : "rgba(255,255,255,0.07)"}
           opacity={done ? 1 : 0.6}
         />
       ))}
@@ -329,9 +329,9 @@ export default function HabitsPage() {
                     <span
                       style={{
                         fontFamily: "var(--font-mono)",
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: 700,
-                        color: "var(--accent)",
+                        color: h.streak > 0 ? "var(--streak)" : "var(--text-lo)",
                       }}
                     >
                       {h.streak}

@@ -32,15 +32,17 @@ export function Topbar({ title, level, xpProgress, totalXp }: TopbarProps) {
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span
-          style={{
-            fontSize: 10,
-            color: "var(--text-lo)",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          {totalXp.toLocaleString()} XP
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{
+            fontSize: 10, fontFamily: "var(--font-mono)", fontWeight: 600,
+            color: "var(--xp)", letterSpacing: "0.04em",
+          }}>
+            {totalXp.toLocaleString()}
+          </span>
+          <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--text-lo)", letterSpacing: "0.1em" }}>
+            XP
+          </span>
+        </div>
         {isMobile && <XPRing level={level} progress={xpProgress} size={28} />}
       </div>
     </div>

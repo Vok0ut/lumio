@@ -75,26 +75,34 @@ export default function StatsPage() {
 
   const maxActivity = Math.max(...data.monthlyActivity, 1);
 
-  const kpis: { label: string; value: string; sparkData: number[] }[] = [
+  const kpis: { label: string; value: string; sparkData: number[]; color: string; valueColor: string }[] = [
     {
       label: "Tasa de habitos",
       value: `${data.habitRate}%`,
       sparkData: data.dailyHabits,
+      color: "var(--success)",
+      valueColor: data.habitRate >= 80 ? "var(--success)" : "var(--text-hi)",
     },
     {
       label: "Tareas completadas",
       value: String(data.tasksCompleted),
       sparkData: data.dailyXp,
+      color: "rgba(255,255,255,0.35)",
+      valueColor: "var(--text-hi)",
     },
     {
       label: "XP esta semana",
       value: String(data.weeklyXp),
       sparkData: data.dailyXp,
+      color: "var(--xp)",
+      valueColor: "var(--xp)",
     },
     {
       label: "Racha actual",
       value: `${data.currentStreak} dias`,
       sparkData: data.dailyHabits,
+      color: "var(--streak)",
+      valueColor: data.currentStreak > 0 ? "var(--streak)" : "var(--text-hi)",
     },
   ];
 
@@ -134,15 +142,15 @@ export default function StatsPage() {
               <span
                 style={{
                   fontFamily: "var(--font-sans)",
-                  fontSize: isMobile ? 20 : 26,
-                  fontWeight: 700,
-                  color: "var(--text-hi)",
-                  letterSpacing: "-0.02em",
+                  fontSize: isMobile ? 20 : 28,
+                  fontWeight: 600,
+                  color: kpi.valueColor,
+                  letterSpacing: "-0.03em",
                 }}
               >
                 {kpi.value}
               </span>
-              <SparkLine data={kpi.sparkData} width={isMobile ? 56 : 80} height={22} />
+              <SparkLine data={kpi.sparkData} width={isMobile ? 56 : 80} height={24} color={kpi.color} />
             </div>
           </TiltCard>
         ))}
@@ -171,6 +179,7 @@ export default function StatsPage() {
               data={data.dailyHabits}
               width={isMobile ? 220 : 280}
               height={isMobile ? 48 : 64}
+              color="var(--success)"
             />
           </div>
           <div
@@ -213,6 +222,7 @@ export default function StatsPage() {
               data={data.dailyXp}
               width={isMobile ? 220 : 280}
               height={isMobile ? 48 : 64}
+              color="var(--xp)"
             />
           </div>
           <div
@@ -260,7 +270,7 @@ export default function StatsPage() {
                 width: isMobile ? 14 : 18,
                 height: isMobile ? 14 : 18,
                 borderRadius: 3,
-                background: "var(--accent)",
+                background: val > 0 ? "var(--xp)" : "rgba(255,255,255,0.05)",
                 opacity: activityOpacity(val, maxActivity),
                 transition: "opacity 0.2s",
                 cursor: "default",

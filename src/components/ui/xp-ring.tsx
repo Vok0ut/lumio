@@ -28,12 +28,15 @@ export function XPRing({ level, progress, size = 36 }: XPRingProps) {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="var(--accent)"
+          stroke="var(--xp)"
           strokeWidth={stroke}
           strokeDasharray={circ}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 0.6s var(--ease-out-expo)" }}
+          style={{
+            transition: "stroke-dashoffset 0.6s var(--ease-out-expo)",
+            filter: "drop-shadow(0 0 4px var(--xp-mid))",
+          }}
         />
       </svg>
       <span
@@ -46,7 +49,7 @@ export function XPRing({ level, progress, size = 36 }: XPRingProps) {
           fontFamily: "var(--font-sans)",
           fontSize: size * 0.32,
           fontWeight: 800,
-          color: "var(--text-hi)",
+          color: "var(--xp)",
         }}
       >
         {level}
