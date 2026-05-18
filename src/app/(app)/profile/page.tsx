@@ -115,6 +115,7 @@ export default function ProfilePage() {
   const isMobile = useIsMobile();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [equippedBadges, setEquippedBadges] = useState<Array<{ skillId: string; tier: string; skillName: string }>>([]);
 
   /* edit modal state */
   const [editOpen, setEditOpen] = useState(false);
@@ -130,10 +131,13 @@ export default function ProfilePage() {
   const [redeemingCode, setRedeemingCode] = useState(false);
 
   const loadProfile = useCallback(() => {
-    fetch("/api/user/me")
-      .then((r) => r.json())
-      .then((data) => {
-        setProfile(data);
+    Promise.all([
+      fetch("/api/user/me").then((r) => r.json()),
+      fetch("/api/achievements").then((r) => r.json()).catch(() => ({ equippedBadges: [] })),
+    ])
+      .then(([userData, achData]) => {
+        setProfile(userData);
+        setEquippedBadges(achData?.equippedBadges ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -297,6 +301,27 @@ export default function ProfilePage() {
             <XPRing level={profile.level} progress={xpProgress} size={36} />
           </div>
         </div>
+
+        {/* Equipped badges row */}
+        {equippedBadges.length > 0 && (
+          <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+            {equippedBadges.map((b) => (
+              <div
+                key={`${b.skillId}-${b.tier}`}
+                title={`${b.skillName} — ${b.tier === "gold" ? "Oro" : "Plata"}`}
+                style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: b.tier === "gold" ? "var(--xp-lo)" : "rgba(170,170,170,0.1)",
+                  border: `2px solid ${b.tier === "gold" ? "var(--xp)" : "#aaa"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, color: b.tier === "gold" ? "var(--xp)" : "#ccc",
+                }}
+              >
+                {b.tier === "gold" ? "★" : "⬡"}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div style={{ textAlign: "center" }}>
           <div

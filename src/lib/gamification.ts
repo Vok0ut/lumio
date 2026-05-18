@@ -113,6 +113,7 @@ export const NAV_ITEMS = [
   { key: "journal", label: "Journal", icon: "book" },
   { key: "stats", label: "Stats", icon: "bar-chart" },
   { key: "achievements", label: "Logros", icon: "award" },
+  { key: "community", label: "Comunidad", icon: "users" },
   { key: "pricing", label: "Pricing", icon: "tag" },
   { key: "profile", label: "Perfil", icon: "user" },
 ] as const;
