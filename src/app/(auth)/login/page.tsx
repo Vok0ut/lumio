@@ -255,8 +255,8 @@ export default function LoginPage() {
                 </div>
 
                 <p className="login-legal">
-                  Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
-                  <a href="#">Politica de privacidad</a>
+                  Al continuar, aceptas los <a href="/legal/terms" target="_blank">Terminos</a> y la{" "}
+                  <a href="/legal/privacy" target="_blank">Politica de privacidad</a>
                 </p>
 
                 <button
@@ -413,8 +413,8 @@ export default function LoginPage() {
                 </div>
 
                 <p className="login-legal">
-                  Al continuar, aceptas los <a href="#">Terminos</a> y la{" "}
-                  <a href="#">Politica de privacidad</a>
+                  Al continuar, aceptas los <a href="/legal/terms" target="_blank">Terminos</a> y la{" "}
+                  <a href="/legal/privacy" target="_blank">Politica de privacidad</a>
                 </p>
               </motion.div>
             )}
