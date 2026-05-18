@@ -44,6 +44,7 @@ export default function LoginPage() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [devCodeInput, setDevCodeInput] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
   const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
@@ -83,6 +84,8 @@ export default function LoginPage() {
 
   /* ── Verify OTP ── */
   const handleCodeComplete = useCallback(async (fullCode: string) => {
+    if (verifying) return;
+    setVerifying(true);
     setError("");
     setReverseCanvasVisible(true);
     setTimeout(() => setInitialCanvasVisible(false), 50);
@@ -114,8 +117,9 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Error inesperado");
       setReverseCanvasVisible(false);
       setInitialCanvasVisible(true);
+      setVerifying(false);
     }
-  }, [email]);
+  }, [email, verifying]);
 
   /* ── Code input handling ── */
   const handleCodeChange = useCallback((index: number, value: string) => {
@@ -246,8 +250,12 @@ export default function LoginPage() {
                         className="login-submit-arrow"
                       >
                         <span className="login-arrow-inner">
-                          <span className="login-arrow-default">→</span>
-                          <span className="login-arrow-hover">→</span>
+                          <span className="login-arrow-default">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                          </span>
+                          <span className="login-arrow-hover">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                          </span>
                         </span>
                       </button>
                     </div>
@@ -403,8 +411,8 @@ export default function LoginPage() {
                   </button>
                   <button
                     type="button"
-                    className={`login-btn ${code.every((d) => d !== "") ? "login-btn-white" : "login-btn-disabled"}`}
-                    disabled={!code.every((d) => d !== "")}
+                    className={`login-btn ${code.every((d) => d !== "") && !verifying ? "login-btn-white" : "login-btn-disabled"}`}
+                    disabled={!code.every((d) => d !== "") || verifying}
                     onClick={() => handleCodeComplete(code.join(""))}
                     style={{ flex: 1 }}
                   >
