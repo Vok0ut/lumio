@@ -130,10 +130,13 @@ export default function CalendarPage() {
     return map;
   }, [events]);
 
+  const [calError, setCalError] = useState("");
+
   /* create event */
   const handleCreate = async () => {
     if (!newTitle.trim() || !newDate || !newTime) return;
     setSaving(true);
+    setCalError("");
 
     const payload: NewEventPayload = {
       title: newTitle.trim(),
@@ -148,13 +151,15 @@ export default function CalendarPage() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const created: CalendarEvent = await res.json();
-        setEvents((prev) => [...prev, created]);
-        resetModal();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al crear evento");
       }
-    } catch {
-      /* swallow */
+      const created: CalendarEvent = await res.json();
+      setEvents((prev) => [...prev, created]);
+      resetModal();
+    } catch (err) {
+      setCalError(err instanceof Error ? err.message : "Error inesperado");
     }
     setSaving(false);
   };
@@ -391,6 +396,15 @@ export default function CalendarPage() {
         title="Nuevo Evento"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {calError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {calError}
+            </div>
+          )}
           {/* title */}
           <div>
             <label

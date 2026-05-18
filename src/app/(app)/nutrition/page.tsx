@@ -614,10 +614,13 @@ function AddFoodModal({
     return null;
   }, [grams, selectedFood, name, customKcal]);
 
+  const [addError, setAddError] = useState("");
+
   const handleSave = async () => {
     const finalName = name || query;
     if (!finalName || !grams) return;
     setSaving(true);
+    setAddError("");
     try {
       const body: Record<string, unknown> = {
         date, meal, name: finalName, grams: parseFloat(grams),
@@ -635,11 +638,15 @@ function AddFoodModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        onAdded();
-        onClose();
-        setQuery(""); setName(""); setGrams(""); setSelectedFood(null); setCustomKcal(""); setPhotoUrl(null);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al guardar");
       }
+      onAdded();
+      onClose();
+      setQuery(""); setName(""); setGrams(""); setSelectedFood(null); setCustomKcal(""); setPhotoUrl(null); setAddError("");
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSaving(false);
     }
@@ -648,6 +655,15 @@ function AddFoodModal({
   return (
     <Modal open={open} onClose={onClose} title={`Anadir a ${MEAL_SLOTS.find((m) => m.key === meal)?.label ?? meal}`}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {addError && (
+          <div style={{
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+            borderRadius: "var(--radius-sm)", padding: "10px 14px",
+            fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+          }}>
+            {addError}
+          </div>
+        )}
         {/* Search */}
         <div>
           <label className="t-label" style={{ display: "block", marginBottom: 6 }}>Alimento</label>
@@ -794,6 +810,8 @@ function CustomFoodModal({
   const [fiber, setFiber] = useState("");
   const [labelPhoto, setLabelPhoto] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -821,9 +839,15 @@ function CustomFoodModal({
     e.target.value = "";
   }, []);
 
+  const resetForm = () => {
+    setName(""); setKcal(""); setProtein(""); setCarbs(""); setFat(""); setFiber("");
+    setLabelPhoto(null); setError(""); setSuccess(false);
+  };
+
   const handleSave = async () => {
     if (!name || !kcal) return;
     setSaving(true);
+    setError("");
     try {
       const body: Record<string, unknown> = {
         name: name.trim(),
@@ -839,19 +863,49 @@ function CustomFoodModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        onCreated();
-        onClose();
-        setName(""); setKcal(""); setProtein(""); setCarbs(""); setFat(""); setFiber(""); setLabelPhoto(null);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al guardar el alimento");
       }
+      onCreated();
+      setSuccess(true);
+      setTimeout(() => { resetForm(); onClose(); }, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleClose = () => { resetForm(); onClose(); };
+
   return (
-    <Modal open={open} onClose={onClose} title="Crear alimento personalizado">
+    <Modal open={open} onClose={handleClose} title="Crear alimento personalizado">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Success message */}
+        {success && (
+          <div style={{
+            background: "var(--success-lo)", border: "1px solid var(--success)",
+            borderRadius: "var(--radius-sm)", padding: "10px 14px",
+            fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--success)",
+            textAlign: "center",
+          }}>
+            Alimento guardado
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div style={{
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+            borderRadius: "var(--radius-sm)", padding: "10px 14px",
+            fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444",
+            textAlign: "center",
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* Photo of nutrition label */}
         <div>
           <label className="t-label" style={{ display: "block", marginBottom: 6 }}>Foto de la etiqueta nutricional</label>
@@ -928,12 +982,14 @@ function CustomFoodModal({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" disabled={saving || !name || !kcal}
-            style={{ opacity: saving || !name || !kcal ? 0.4 : 1 }}
-            onClick={handleSave}>{saving ? "Guardando..." : "Guardar alimento"}</button>
-        </div>
+        {!success && (
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <button className="btn btn-ghost" onClick={handleClose}>Cancelar</button>
+            <button className="btn btn-primary" disabled={saving || !name || !kcal}
+              style={{ opacity: saving || !name || !kcal ? 0.4 : 1 }}
+              onClick={handleSave}>{saving ? "Guardando..." : "Guardar alimento"}</button>
+          </div>
+        )}
       </div>
     </Modal>
   );

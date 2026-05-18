@@ -261,20 +261,28 @@ export default function CommunityPage() {
     }).catch(() => { loadInitial(selectedCategory); });
   };
 
+  const [postError, setPostError] = useState("");
+
   const handleSubmit = async () => {
     if (!draft.trim() || !draftCategory || submitting) return;
     setSubmitting(true);
+    setPostError("");
     try {
       const res = await fetch("/api/community/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: draft.trim(), goalCategory: draftCategory }),
       });
-      if (res.ok) {
-        setDraft("");
-        setComposing(false);
-        loadInitial(selectedCategory);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al publicar");
       }
+      setDraft("");
+      setComposing(false);
+      setPostError("");
+      loadInitial(selectedCategory);
+    } catch (err) {
+      setPostError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSubmitting(false);
     }
@@ -336,6 +344,15 @@ export default function CommunityPage() {
           display: "flex", flexDirection: "column", gap: 12,
           boxShadow: "0 0 24px rgba(196,145,58,0.06)",
         }}>
+          {postError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {postError}
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 12, fontFamily: "var(--font-sans)", fontWeight: 600, color: "var(--text-hi)" }}>
               Nueva publicacion

@@ -104,20 +104,23 @@ export default function HabitsPage() {
   const [formTarget, setFormTarget] = useState("");
   const [formCategory, setFormCategory] = useState<HabitCategory>("mente");
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [fetchError, setFetchError] = useState(false);
 
   /* ── fetch habits ── */
   const loadHabits = useCallback(() => {
     fetch("/api/habits")
       .then((r) => r.json())
-      .then((data: Array<Record<string, unknown>>) =>
+      .then((data: Array<Record<string, unknown>>) => {
+        setFetchError(false);
         setHabits(
           (data ?? []).map((h) => ({
             ...h,
             completedToday: Boolean((h as { todayCompleted?: boolean }).todayCompleted ?? (h as { completedToday?: boolean }).completedToday ?? false),
           })) as Habit[]
-        )
-      )
-      .catch(() => {});
+        );
+      })
+      .catch(() => { setFetchError(true); });
   }, []);
 
   useEffect(() => {
@@ -156,6 +159,7 @@ export default function HabitsPage() {
   const handleCreate = useCallback(async () => {
     if (!formName.trim() || !formTarget.trim()) return;
     setSubmitting(true);
+    setFormError("");
     try {
       const res = await fetch("/api/habits", {
         method: "POST",
@@ -166,13 +170,18 @@ export default function HabitsPage() {
           category: formCategory,
         }),
       });
-      if (res.ok) {
-        setFormName("");
-        setFormTarget("");
-        setFormCategory("mente");
-        setShowModal(false);
-        loadHabits();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al crear habito");
       }
+      setFormName("");
+      setFormTarget("");
+      setFormCategory("mente");
+      setShowModal(false);
+      setFormError("");
+      loadHabits();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSubmitting(false);
     }
@@ -191,6 +200,23 @@ export default function HabitsPage() {
 
   return (
     <div className="section-inner">
+      {fetchError && (
+        <div style={{
+          background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+          borderRadius: "var(--radius-sm)", padding: "12px 16px", marginBottom: 16,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444" }}>
+            Error al cargar habitos
+          </span>
+          <button onClick={loadHabits} style={{
+            background: "none", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "var(--radius-sm)",
+            padding: "4px 10px", fontFamily: "var(--font-mono)", fontSize: 10, color: "#ef4444", cursor: "pointer",
+          }}>
+            Reintentar
+          </button>
+        </div>
+      )}
       {/* ── Header ── */}
       <div
         style={{
@@ -383,6 +409,15 @@ export default function HabitsPage() {
         title="Nuevo Habito"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {formError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {formError}
+            </div>
+          )}
           <div>
             <label
               className="t-label"

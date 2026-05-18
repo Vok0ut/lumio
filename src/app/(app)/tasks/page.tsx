@@ -124,9 +124,12 @@ export default function TasksPage() {
     }
   };
 
+  const [taskError, setTaskError] = useState("");
+
   const createTask = async () => {
     if (!title.trim()) return;
     setSaving(true);
+    setTaskError("");
     try {
       const tags = tagsRaw
         .split(",")
@@ -142,14 +145,17 @@ export default function TasksPage() {
           estimate: estimate.trim() || undefined,
         }),
       });
-      if (res.ok) {
-        const task = await res.json();
-        setTasks((ts) => [task, ...ts]);
-        resetForm();
-        setModalOpen(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al crear tarea");
       }
-    } catch {
-      /* silently fail */
+      const task = await res.json();
+      setTasks((ts) => [task, ...ts]);
+      resetForm();
+      setModalOpen(false);
+      setTaskError("");
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSaving(false);
     }
@@ -502,6 +508,15 @@ export default function TasksPage() {
         title="Nueva Tarea"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {taskError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {taskError}
+            </div>
+          )}
           <div>
             <label className="t-label" style={{ display: "block", marginBottom: 6 }}>
               Titulo

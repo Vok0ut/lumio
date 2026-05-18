@@ -10,7 +10,7 @@ const CreateCustomFoodSchema = z.object({
   carbs: z.number().min(0).default(0),
   fat: z.number().min(0).default(0),
   fiber: z.number().min(0).default(0),
-  labelPhoto: z.string().max(2000).optional(), // URL only — use object storage for images
+  labelPhoto: z.string().max(500000).optional(), // base64 data URL
 });
 
 export async function GET() {

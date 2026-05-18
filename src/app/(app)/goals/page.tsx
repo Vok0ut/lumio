@@ -112,9 +112,12 @@ export default function GoalsPage() {
     }
   };
 
+  const [goalError, setGoalError] = useState("");
+
   const createGoal = async () => {
     if (!title.trim() || !deadline || !category.trim()) return;
     setSaving(true);
+    setGoalError("");
     try {
       const milestones = milestoneInputs
         .filter((m) => m.label.trim())
@@ -130,14 +133,17 @@ export default function GoalsPage() {
           milestones,
         }),
       });
-      if (res.ok) {
-        const goal = await res.json();
-        setGoals((gs) => [goal, ...gs]);
-        resetForm();
-        setModalOpen(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al crear objetivo");
       }
-    } catch {
-      /* silently fail */
+      const goal = await res.json();
+      setGoals((gs) => [goal, ...gs]);
+      resetForm();
+      setModalOpen(false);
+      setGoalError("");
+    } catch (err) {
+      setGoalError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
       setSaving(false);
     }
@@ -394,6 +400,15 @@ export default function GoalsPage() {
         title="Nueva Meta"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {goalError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {goalError}
+            </div>
+          )}
           <div>
             <label className="t-label" style={{ display: "block", marginBottom: 6 }}>
               Titulo

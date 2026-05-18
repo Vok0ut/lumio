@@ -255,10 +255,13 @@ export default function JournalPage() {
     setLoadingMore(false);
   };
 
+  const [journalError, setJournalError] = useState("");
+
   /* create entry */
   const handleCreate = async () => {
     if (!newTitle.trim() || !newBody.trim()) return;
     setSaving(true);
+    setJournalError("");
 
     const payload: NewEntryPayload = {
       title: newTitle.trim(),
@@ -277,13 +280,15 @@ export default function JournalPage() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const created: JournalEntry = await res.json();
-        setEntries((prev) => [created, ...prev]);
-        resetModal();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error al crear entrada");
       }
-    } catch {
-      /* swallow */
+      const created: JournalEntry = await res.json();
+      setEntries((prev) => [created, ...prev]);
+      resetModal();
+    } catch (err) {
+      setJournalError(err instanceof Error ? err.message : "Error inesperado");
     }
     setSaving(false);
   };
@@ -401,6 +406,15 @@ export default function JournalPage() {
         title="Nueva Entrada"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {journalError && (
+            <div style={{
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "var(--radius-sm)", padding: "10px 14px",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "#ef4444", textAlign: "center",
+            }}>
+              {journalError}
+            </div>
+          )}
           {/* title */}
           <div>
             <label className="t-label" style={{ marginBottom: 6, display: "block" }}>
