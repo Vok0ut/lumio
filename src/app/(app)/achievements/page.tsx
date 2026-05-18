@@ -125,10 +125,10 @@ function SkillTreeView({
   /* Responsive layout:
      Desktop: full wide tree, aspect ratio maintained, no scroll needed
      Mobile:  vertical layout with larger padding, horizontally scrollable */
-  const svgW = isMobile ? 400 : 640;
-  const svgH = isMobile ? 480 : 480;
-  const R = isMobile ? 22 : 28;
-  const PAD = isMobile ? 32 : 48; // padding inside SVG so nodes don't clip edges
+  const svgW = isMobile ? 340 : 500;
+  const svgH = isMobile ? 380 : 380;
+  const R = isMobile ? 18 : 22;
+  const PAD = isMobile ? 28 : 40; // padding inside SVG so nodes don't clip edges
 
   const getSkill = (id: string) => skills.find((s) => s.id === id);
 
@@ -150,8 +150,8 @@ function SkillTreeView({
         viewBox={`0 0 ${svgW} ${svgH}`}
         preserveAspectRatio="xMidYMid meet"
         style={{
-          width: isMobile ? Math.max(400, svgW) : "100%",
-          minWidth: isMobile ? 400 : undefined,
+          width: isMobile ? Math.max(340, svgW) : "100%",
+          minWidth: isMobile ? 340 : undefined,
           height: "auto",
           display: "block",
         }}
@@ -239,19 +239,19 @@ function SkillTreeView({
 
               {/* Lock icon for level 0 nodes */}
               {level === 0 && (
-                <SvgLock x={cx} y={cy - (isMobile ? 2 : 3)} size={isMobile ? 12 : 14} color="rgba(255,255,255,0.25)" />
+                <SvgLock x={cx} y={cy - (isMobile ? 2 : 2)} size={isMobile ? 10 : 12} color="rgba(255,255,255,0.25)" />
               )}
 
               {/* Skill name + level */}
               {level > 0 && (
                 <>
                   <text
-                    x={cx} y={cy - (isMobile ? 4 : 5)}
+                    x={cx} y={cy - (isMobile ? 3 : 4)}
                     textAnchor="middle" dominantBaseline="middle"
                     fill={nodeColor(level)}
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: isMobile ? 6 : 8,
+                      fontSize: isMobile ? 5 : 7,
                       fontWeight: 700,
                       letterSpacing: "0.06em",
                       textTransform: "uppercase",
@@ -260,10 +260,10 @@ function SkillTreeView({
                     {node.name}
                   </text>
                   <text
-                    x={cx} y={cy + (isMobile ? 5 : 7)}
+                    x={cx} y={cy + (isMobile ? 4 : 5)}
                     textAnchor="middle" dominantBaseline="middle"
                     fill={nodeColor(level)}
-                    style={{ fontFamily: "var(--font-mono)", fontSize: isMobile ? 6 : 8, opacity: 0.75 }}
+                    style={{ fontFamily: "var(--font-mono)", fontSize: isMobile ? 5 : 7, opacity: 0.75 }}
                   >
                     {level >= MAX_LEVEL ? "MAX" : `Lv.${level}`}
                   </text>
@@ -273,12 +273,12 @@ function SkillTreeView({
               {/* Name label below node for locked nodes */}
               {level === 0 && (
                 <text
-                  x={cx} y={cy + R + (isMobile ? 10 : 13)}
+                  x={cx} y={cy + R + (isMobile ? 8 : 10)}
                   textAnchor="middle" dominantBaseline="middle"
                   fill="var(--text-lo)"
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: isMobile ? 6 : 7,
+                    fontSize: isMobile ? 5 : 6,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     opacity: 0.6,
