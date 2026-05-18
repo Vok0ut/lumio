@@ -29,6 +29,18 @@ export async function GET() {
   const { level, currentLevelXP, xpToNextLevel } = getLevelFromXP(user.totalXp);
   const rank = getRankForLevel(level);
 
+  // Developer / Dev Premium detection
+  const DEVELOPER_EMAIL = "enolpm2008@gmail.com";
+  const isDeveloper = user.email === DEVELOPER_EMAIL;
+  let isDevPremium = false;
+  if (user.plan === "PREMIUM" && !isDeveloper) {
+    // Check if they got premium through a dev code
+    const devCodeUsed = await prisma.devCode.findFirst({
+      where: { usedBy: user.email },
+    });
+    isDevPremium = !!devCodeUsed;
+  }
+
   const [habitsCompleted, tasksDone, journalEntries, goalsCompleted, recentXpLogs] =
     await Promise.all([
       prisma.habitLog.count({
@@ -63,6 +75,8 @@ export async function GET() {
     },
     recentXpLogs,
     createdAt: user.createdAt,
+    isDeveloper,
+    isDevPremium,
   });
   } catch (e) { console.error("[GET /api/user/me]", e); return serverError(); }
 }

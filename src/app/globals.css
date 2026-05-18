@@ -263,6 +263,7 @@ select.input {
   color: var(--text-hi); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s; overflow: hidden;
+  z-index: 2;
 }
 .login-submit-arrow:hover { background: rgba(255,255,255,0.16); }
 .login-arrow-inner {

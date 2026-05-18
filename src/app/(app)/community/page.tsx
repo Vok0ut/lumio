@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Icon } from "@/src/components/ui/icons";
-import { TiltCard } from "@/src/components/ui/tilt-card";
+import { useIsMobile } from "@/src/hooks/use-mobile";
 
 const ALLOWED_EMOJIS = ["👍", "🔥", "💡", "❤️", "🎯"] as const;
 type Emoji = (typeof ALLOWED_EMOJIS)[number];
@@ -30,10 +30,11 @@ function timeAgo(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
-  return `${d}d`;
+  if (d < 7)  return `${d}d`;
+  return `${Math.floor(d / 7)}sem`;
 }
 
-function Avatar({ user }: { user: Author }) {
+function Avatar({ user, size = 36 }: { user: Author; size?: number }) {
   const initials = (user.name ?? "?")[0].toUpperCase();
   if (user.image) {
     return (
@@ -41,22 +42,28 @@ function Avatar({ user }: { user: Author }) {
       <img
         src={user.image}
         alt={user.name ?? ""}
-        style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border-mid)" }}
+        style={{
+          width: size, height: size, borderRadius: "50%", objectFit: "cover",
+          border: "2px solid var(--border-mid)", flexShrink: 0,
+        }}
       />
     );
   }
   return (
     <div style={{
-      width: 32, height: 32, borderRadius: "50%",
-      background: "var(--bg-raised)", border: "1px solid var(--border-mid)",
+      width: size, height: size, borderRadius: "50%",
+      background: "linear-gradient(135deg, rgba(196,145,58,0.15), rgba(255,255,255,0.05))",
+      border: "2px solid var(--border-mid)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, color: "var(--text-mid)",
+      fontFamily: "var(--font-sans)", fontSize: size * 0.38, fontWeight: 700, color: "var(--text-mid)",
       flexShrink: 0,
     }}>
       {initials}
     </div>
   );
 }
+
+/* ── Post Card ─── */
 
 function PostCard({
   post,
@@ -65,62 +72,118 @@ function PostCard({
   post: Post;
   onReact: (postId: string, emoji: Emoji) => void;
 }) {
+  const totalReactions = ALLOWED_EMOJIS.reduce((sum, e) =>
+    sum + (post.reactions[e]?.count ?? 0), 0);
+
   return (
-    <TiltCard style={{ padding: "16px 20px" }} max={3} scale={1.005}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <Avatar user={post.author} />
+    <div style={{
+      background: "var(--bg-surface)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--radius-lg)",
+      overflow: "hidden",
+      transition: "border-color 0.2s",
+    }}>
+      {/* Post header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "14px 18px 0",
+      }}>
+        <Avatar user={post.author} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600,
-            color: "var(--text-hi)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>
-            {post.author.name ?? "Usuario"}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{
+              fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600,
+              color: "var(--text-hi)",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>
+              {post.author.name ?? "Usuario"}
+            </span>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-lo)",
+            }}>
+              · {timeAgo(post.createdAt)}
+            </span>
           </div>
-          <div style={{ fontSize: 10, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginTop: 1 }}>
-            {post.goalCategory} · {timeAgo(post.createdAt)}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            marginTop: 2,
+            padding: "2px 8px",
+            background: "var(--xp-lo)",
+            border: "1px solid var(--xp-mid)",
+            borderRadius: 999,
+            fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--xp)",
+            fontWeight: 500,
+          }}>
+            <Icon name="target" size={9} color="var(--xp)" />
+            {post.goalCategory}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <p style={{
-        fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-hi)",
-        lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word",
-      }}>
-        {post.content}
-      </p>
-
-      {/* Reactions */}
-      <div style={{ display: "flex", gap: 6, marginTop: 14, flexWrap: "wrap" }}>
-        {ALLOWED_EMOJIS.map((emoji) => {
-          const r = post.reactions[emoji] ?? { count: 0, reacted: false };
-          return (
-            <button
-              key={emoji}
-              onClick={() => onReact(post.id, emoji)}
-              style={{
-                display: "flex", alignItems: "center", gap: 4,
-                background: r.reacted ? "var(--xp-lo)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${r.reacted ? "var(--xp-mid)" : "var(--border)"}`,
-                borderRadius: 999, padding: "3px 10px",
-                cursor: "pointer", fontSize: 12,
-                color: r.reacted ? "var(--xp)" : "var(--text-mid)",
-                transition: "all 0.15s",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{emoji}</span>
-              {r.count > 0 && <span style={{ fontSize: 11 }}>{r.count}</span>}
-            </button>
-          );
-        })}
+      <div style={{ padding: "14px 18px 16px" }}>
+        <p style={{
+          fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--text-hi)",
+          lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word",
+        }}>
+          {post.content}
+        </p>
       </div>
-    </TiltCard>
+
+      {/* Reactions bar */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 18px",
+        borderTop: "1px solid var(--border)",
+        background: "rgba(255,255,255,0.01)",
+      }}>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {ALLOWED_EMOJIS.map((emoji) => {
+            const r = post.reactions[emoji] ?? { count: 0, reacted: false };
+            return (
+              <button
+                key={emoji}
+                onClick={() => onReact(post.id, emoji)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  background: r.reacted ? "var(--xp-lo)" : "transparent",
+                  border: `1px solid ${r.reacted ? "var(--xp-mid)" : "transparent"}`,
+                  borderRadius: 999, padding: "4px 10px",
+                  cursor: "pointer", fontSize: 14,
+                  color: r.reacted ? "var(--xp)" : "var(--text-mid)",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!r.reacted) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!r.reacted) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {emoji}
+                {r.count > 0 && (
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                    {r.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {totalReactions > 0 && (
+          <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-lo)" }}>
+            {totalReactions} {totalReactions === 1 ? "reaccion" : "reacciones"}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
+/* ── Main Page ─── */
+
 export default function CommunityPage() {
+  const isMobile = useIsMobile();
   const [posts, setPosts] = useState<Post[]>([]);
   const [myCategories, setMyCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -176,7 +239,6 @@ export default function CommunityPage() {
   };
 
   const handleReact = async (postId: string, emoji: Emoji) => {
-    // Optimistic
     setPosts((prev) => prev.map((p) => {
       if (p.id !== postId) return p;
       const r = p.reactions[emoji] ?? { count: 0, reacted: false };
@@ -222,19 +284,42 @@ export default function CommunityPage() {
 
   return (
     <div className="section-inner">
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <h1 className="t-title" style={{ fontFamily: "var(--font-sans)", color: "var(--text-hi)" }}>
-            Comunidad
-          </h1>
-          <p style={{ fontSize: 11, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginTop: 2 }}>
-            Comparte consejos con personas que tienen tus mismas metas
+      {/* Hero header */}
+      <div style={{
+        background: "linear-gradient(135deg, rgba(196,145,58,0.06), rgba(255,255,255,0.02))",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-lg)",
+        padding: isMobile ? "20px 16px" : "24px 28px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 16,
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "var(--radius-sm)",
+              background: "var(--xp-lo)", border: "1px solid var(--xp-mid)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon name="users" size={16} color="var(--xp)" />
+            </div>
+            <h1 style={{
+              fontFamily: "var(--font-sans)", fontSize: isMobile ? 20 : 24, fontWeight: 700,
+              color: "var(--text-hi)", letterSpacing: "-0.02em", margin: 0,
+            }}>
+              Comunidad
+            </h1>
+          </div>
+          <p style={{
+            fontSize: 12, color: "var(--text-lo)", fontFamily: "var(--font-mono)",
+            margin: 0, lineHeight: 1.5,
+          }}>
+            Comparte consejos y estrategias con personas que comparten tus metas
           </p>
         </div>
         <button
           className="btn btn-primary"
           onClick={() => { setComposing((c) => !c); setTimeout(() => textareaRef.current?.focus(), 50); }}
+          style={{ flexShrink: 0 }}
         >
           <Icon name="plus" size={14} color="#090909" />
           Publicar
@@ -245,12 +330,18 @@ export default function CommunityPage() {
       {composing && (
         <div style={{
           background: "var(--bg-surface)",
-          border: "1px solid var(--border-mid)",
+          border: "1px solid var(--xp-mid)",
           borderRadius: "var(--radius-lg)",
           padding: "16px 20px",
           display: "flex", flexDirection: "column", gap: 12,
+          boxShadow: "0 0 24px rgba(196,145,58,0.06)",
         }}>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontFamily: "var(--font-sans)", fontWeight: 600, color: "var(--text-hi)" }}>
+              Nueva publicacion
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {allCategories.map((cat) => (
               <button
                 key={cat}
@@ -270,7 +361,7 @@ export default function CommunityPage() {
             ))}
             {allCategories.length === 0 && (
               <span style={{ fontSize: 11, color: "var(--text-lo)", fontFamily: "var(--font-mono)" }}>
-                Añade metas para publicar en su categoría
+                Crea metas para publicar en su categoria
               </span>
             )}
           </div>
@@ -282,19 +373,20 @@ export default function CommunityPage() {
             placeholder="Comparte un consejo, estrategia o motivación..."
             rows={3}
             style={{
-              background: "transparent",
+              background: "rgba(255,255,255,0.02)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
               color: "var(--text-hi)",
               fontFamily: "var(--font-sans)",
               fontSize: 13,
-              padding: "10px 14px",
+              padding: "12px 16px",
               resize: "vertical",
               outline: "none",
+              lineHeight: 1.6,
             }}
           />
           <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: "var(--text-lo)", fontFamily: "var(--font-mono)" }}>
+            <span style={{ fontSize: 10, color: draft.length > 450 ? "var(--streak)" : "var(--text-lo)", fontFamily: "var(--font-mono)" }}>
               {draft.length}/500
             </span>
             <div style={{ display: "flex", gap: 8 }}>
@@ -312,17 +404,20 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {/* Category filter */}
-      {allCategories.length > 1 && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {/* Category filter pills */}
+      {allCategories.length > 0 && (
+        <div style={{
+          display: "flex", gap: 6, flexWrap: "wrap",
+          padding: "2px 0",
+        }}>
           <button
             onClick={() => setSelectedCategory(null)}
             style={{
-              padding: "4px 12px",
-              background: selectedCategory === null ? "var(--xp-lo)" : "transparent",
+              padding: "6px 14px",
+              background: selectedCategory === null ? "var(--xp-lo)" : "rgba(255,255,255,0.03)",
               border: `1px solid ${selectedCategory === null ? "var(--xp-mid)" : "var(--border)"}`,
               borderRadius: 999, cursor: "pointer",
-              fontFamily: "var(--font-mono)", fontSize: 10,
+              fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 500,
               color: selectedCategory === null ? "var(--xp)" : "var(--text-mid)",
               transition: "all 0.15s",
             }}
@@ -334,11 +429,11 @@ export default function CommunityPage() {
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               style={{
-                padding: "4px 12px",
-                background: selectedCategory === cat ? "var(--xp-lo)" : "transparent",
+                padding: "6px 14px",
+                background: selectedCategory === cat ? "var(--xp-lo)" : "rgba(255,255,255,0.03)",
                 border: `1px solid ${selectedCategory === cat ? "var(--xp-mid)" : "var(--border)"}`,
                 borderRadius: 999, cursor: "pointer",
-                fontFamily: "var(--font-mono)", fontSize: 10,
+                fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 500,
                 color: selectedCategory === cat ? "var(--xp)" : "var(--text-mid)",
                 transition: "all 0.15s",
               }}
@@ -349,31 +444,57 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {/* Post list */}
+      {/* Feed */}
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[0, 1, 2].map((i) => (
-            <div key={i} className="card" style={{ padding: 20, height: 100, opacity: 0.5 }}>
-              <div className="skeleton" style={{ width: "30%", height: 12, borderRadius: 6 }} />
-              <div style={{ height: 8 }} />
-              <div className="skeleton" style={{ width: "90%", height: 12, borderRadius: 6 }} />
+            <div key={i} style={{
+              background: "var(--bg-surface)", border: "1px solid var(--border)",
+              borderRadius: "var(--radius-lg)", padding: 20,
+            }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+                <div className="skeleton" style={{ width: 38, height: 38, borderRadius: "50%" }} />
+                <div>
+                  <div className="skeleton" style={{ width: 110, height: 12, borderRadius: 4 }} />
+                  <div style={{ height: 6 }} />
+                  <div className="skeleton" style={{ width: 60, height: 10, borderRadius: 999 }} />
+                </div>
+              </div>
+              <div className="skeleton" style={{ width: "95%", height: 12, borderRadius: 4 }} />
               <div style={{ height: 6 }} />
-              <div className="skeleton" style={{ width: "70%", height: 12, borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: "75%", height: 12, borderRadius: 4 }} />
+              <div style={{ height: 6 }} />
+              <div className="skeleton" style={{ width: "60%", height: 12, borderRadius: 4 }} />
             </div>
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="card" style={{ padding: 40, textAlign: "center" }}>
-          <Icon name="users" size={28} color="var(--text-lo)" />
-          <p style={{ fontSize: 12, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginTop: 12 }}>
+        <div style={{
+          background: "var(--bg-surface)", border: "1px solid var(--border)",
+          borderRadius: "var(--radius-lg)", padding: "48px 20px", textAlign: "center",
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: "50%",
+            background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 16px",
+          }}>
+            <Icon name="users" size={24} color="var(--text-lo)" />
+          </div>
+          <p style={{ fontSize: 14, color: "var(--text-mid)", fontFamily: "var(--font-sans)", fontWeight: 500 }}>
             {myCategories.length === 0
-              ? "Añade metas para ver publicaciones de tu comunidad"
-              : "Sé el primero en compartir un consejo en tu comunidad"}
+              ? "Crea metas para unirte a tu comunidad"
+              : "Se el primero en compartir un consejo"}
+          </p>
+          <p style={{ fontSize: 11, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginTop: 6 }}>
+            {myCategories.length === 0
+              ? "Las publicaciones se filtran por categorias de tus metas"
+              : "Tu comunidad vera publicaciones sobre las metas que compartis"}
           </p>
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {posts.map((post) => (
               <PostCard key={post.id} post={post} onReact={handleReact} />
             ))}
@@ -386,7 +507,7 @@ export default function CommunityPage() {
               disabled={loadingMore}
               style={{ width: "100%", marginTop: 4 }}
             >
-              {loadingMore ? "Cargando..." : "Cargar más"}
+              {loadingMore ? "Cargando..." : "Cargar mas publicaciones"}
             </button>
           )}
         </>

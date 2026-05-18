@@ -38,6 +38,8 @@ interface UserProfile {
   stats: UserStats;
   recentXpLogs: XpLog[];
   createdAt: string;
+  isDeveloper?: boolean;
+  isDevPremium?: boolean;
 }
 
 const ACTION_ICONS: Record<string, string> = {
@@ -128,6 +130,7 @@ export default function ProfilePage() {
   const [codeOpen, setCodeOpen] = useState(false);
   const [devCode, setDevCode] = useState("");
   const [codeError, setCodeError] = useState("");
+  const [codeSuccess, setCodeSuccess] = useState(false);
   const [redeemingCode, setRedeemingCode] = useState(false);
 
   const loadProfile = useCallback(() => {
@@ -175,6 +178,7 @@ export default function ProfilePage() {
   const redeemCode = useCallback(async () => {
     if (!devCode.trim()) return;
     setCodeError("");
+    setCodeSuccess(false);
     setRedeemingCode(true);
     try {
       const res = await fetch("/api/user/redeem-code", {
@@ -187,15 +191,21 @@ export default function ProfilePage() {
         setCodeError(data.error || "Error al canjear el codigo");
         return;
       }
+      // Success!
+      setCodeSuccess(true);
       setProfile((prev) => prev ? { ...prev, plan: "PREMIUM" } : prev);
-      setCodeOpen(false);
-      setDevCode("");
+      setTimeout(() => {
+        setCodeOpen(false);
+        setDevCode("");
+        setCodeSuccess(false);
+        loadProfile(); // Refresh to get updated tags
+      }, 2000);
     } catch {
       setCodeError("Error de conexion");
     } finally {
       setRedeemingCode(false);
     }
-  }, [devCode]);
+  }, [devCode, loadProfile]);
 
   const saveProfile = useCallback(async () => {
     if (!profile) return;
@@ -346,6 +356,31 @@ export default function ProfilePage() {
             {profile.email}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
+            {profile.isDeveloper && (
+              <span
+                className="badge"
+                style={{
+                  background: "rgba(130,80,255,0.15)",
+                  color: "#A78BFA",
+                  border: "1px solid rgba(130,80,255,0.3)",
+                  fontWeight: 600,
+                }}
+              >
+                Desarrollador
+              </span>
+            )}
+            {profile.isDevPremium && !profile.isDeveloper && (
+              <span
+                className="badge"
+                style={{
+                  background: "rgba(130,80,255,0.10)",
+                  color: "#A78BFA",
+                  border: "1px solid rgba(130,80,255,0.2)",
+                }}
+              >
+                Dev Premium
+              </span>
+            )}
             <span className="badge badge-white">{profile.rank.name}</span>
             <span
               className="badge"
@@ -683,25 +718,44 @@ export default function ProfilePage() {
               color: "#EF9A9A",
               padding: "8px 12px",
               background: "rgba(244,67,54,0.1)",
+              border: "1px solid rgba(244,67,54,0.2)",
               borderRadius: "var(--radius-sm)",
             }}>
               {codeError}
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button className="btn btn-ghost" onClick={() => setCodeOpen(false)}>
-              Cancelar
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={redeemCode}
-              disabled={redeemingCode || !devCode.trim()}
-              style={{ opacity: redeemingCode || !devCode.trim() ? 0.5 : 1 }}
-            >
-              {redeemingCode ? "Canjeando..." : "Canjear"}
-            </button>
-          </div>
+          {codeSuccess && (
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--success)",
+              padding: "8px 12px",
+              background: "var(--success-lo)",
+              border: "1px solid var(--success-mid)",
+              borderRadius: "var(--radius-sm)",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <span style={{ fontSize: 14 }}>✓</span>
+              Codigo canjeado correctamente. Bienvenido a Premium!
+            </div>
+          )}
+
+          {!codeSuccess && (
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" onClick={() => setCodeOpen(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={redeemCode}
+                disabled={redeemingCode || !devCode.trim()}
+                style={{ opacity: redeemingCode || !devCode.trim() ? 0.5 : 1 }}
+              >
+                {redeemingCode ? "Canjeando..." : "Canjear"}
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

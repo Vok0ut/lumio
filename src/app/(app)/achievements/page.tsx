@@ -6,6 +6,7 @@ import { useIsMobile } from "@/src/hooks/use-mobile";
 import { TiltCard } from "@/src/components/ui/tilt-card";
 import { usePlan } from "@/src/hooks/use-plan";
 import { PremiumWall } from "@/src/components/ui/premium-wall";
+import { Icon } from "@/src/components/ui/icons";
 
 type Tab = "tree" | "badges" | "rewards" | "skillbadges";
 
@@ -50,7 +51,16 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "rewards",     label: "Rewards" },
 ];
 
-const BADGE_ICONS = ["★", "✦", "◆", "⬡", "✧", "↯", "⟐", "⬟"];
+/* ── SVG Lock Icon (inline for SVG context) ─── */
+function SvgLock({ x, y, size = 14, color = "rgba(255,255,255,0.35)" }: { x: number; y: number; size?: number; color?: string }) {
+  const s = size;
+  return (
+    <g transform={`translate(${x - s/2}, ${y - s/2})`}>
+      <rect x={s*0.15} y={s*0.42} width={s*0.7} height={s*0.5} rx={s*0.08} fill={color} />
+      <path d={`M${s*0.25},${s*0.42} V${s*0.3} a${s*0.25},${s*0.25} 0 0 1 ${s*0.5},0 V${s*0.42}`} fill="none" stroke={color} strokeWidth={s*0.1} strokeLinecap="round" />
+    </g>
+  );
+}
 
 /* ── helpers ─────────────────────────────────── */
 
@@ -112,18 +122,25 @@ function SkillTreeView({
   onSelectNode: (node: SkillNode) => void;
   selectedId: string | null;
 }) {
-  const svgW = 900;
-  const svgH = 720;
-  const R = isMobile ? 34 : 42;
+  /* Responsive layout:
+     Desktop: full wide tree, aspect ratio maintained, no scroll needed
+     Mobile:  vertical layout with larger padding, horizontally scrollable */
+  const svgW = isMobile ? 500 : 800;
+  const svgH = isMobile ? 600 : 600;
+  const R = isMobile ? 28 : 36;
+  const PAD = isMobile ? 40 : 60; // padding inside SVG so nodes don't clip edges
 
   const getSkill = (id: string) => skills.find((s) => s.id === id);
+
+  // Map node percentages to SVG coords with padding
+  const toX = (pct: number) => PAD + (pct / 100) * (svgW - PAD * 2);
+  const toY = (pct: number) => PAD + (pct / 100) * (svgH - PAD * 2);
 
   return (
     <div style={{
       position: "relative",
-      overflowX: "auto",
-      overflowY: "auto",
-      maxHeight: isMobile ? 400 : 560,
+      overflowX: isMobile ? "auto" : "hidden",
+      overflowY: "hidden",
       borderRadius: "var(--radius-lg)",
       border: "1px solid var(--border)",
       background: "rgba(255,255,255,0.015)",
@@ -131,9 +148,10 @@ function SkillTreeView({
       <Starfield />
       <svg
         viewBox={`0 0 ${svgW} ${svgH}`}
+        preserveAspectRatio="xMidYMid meet"
         style={{
-          width: isMobile ? 680 : "100%",
-          minWidth: isMobile ? 680 : undefined,
+          width: isMobile ? Math.max(500, svgW) : "100%",
+          minWidth: isMobile ? 500 : undefined,
           height: "auto",
           display: "block",
         }}
@@ -147,10 +165,10 @@ function SkillTreeView({
           return (
             <line
               key={`${node.parent}-${node.id}`}
-              x1={(parent.x / 100) * svgW}
-              y1={(parent.y / 100) * svgH}
-              x2={(node.x / 100) * svgW}
-              y2={(node.y / 100) * svgH}
+              x1={toX(parent.x)}
+              y1={toY(parent.y)}
+              x2={toX(node.x)}
+              y2={toY(node.y)}
               stroke={lit ? "var(--xp-mid)" : "var(--border)"}
               strokeWidth={lit ? 2 : 1.5}
               strokeDasharray={lit ? "none" : "10 8"}
@@ -165,15 +183,15 @@ function SkillTreeView({
           const level = skill?.level ?? 0;
           const currentXp = skill?.currentXp ?? 0;
           const xpToNext = skill?.xpToNext ?? XP_PER_LEVEL;
-          const cx = (node.x / 100) * svgW;
-          const cy = (node.y / 100) * svgH;
+          const cx = toX(node.x);
+          const cy = toY(node.y);
           const isSelected = selectedId === node.id;
           const hasSilver = skill?.badges?.silver != null;
           const hasGold = skill?.badges?.gold != null;
 
           // XP ring arc
           const pct = xpToNext > 0 ? currentXp / xpToNext : (level >= MAX_LEVEL ? 1 : 0);
-          const arcR = R + 7;
+          const arcR = R + 6;
           const circ = 2 * Math.PI * arcR;
           const dash = pct * circ;
 
@@ -185,7 +203,7 @@ function SkillTreeView({
             >
               {/* Glow for selected */}
               {isSelected && (
-                <circle cx={cx} cy={cy} r={R + 14}
+                <circle cx={cx} cy={cy} r={R + 12}
                   fill="var(--xp-lo)" stroke="var(--xp-mid)" strokeWidth="1" opacity="0.6" />
               )}
 
@@ -206,7 +224,7 @@ function SkillTreeView({
 
               {/* Completed glow ring */}
               {level >= MAX_LEVEL && (
-                <circle cx={cx} cy={cy} r={R + 8} fill="none"
+                <circle cx={cx} cy={cy} r={R + 7} fill="none"
                   stroke="var(--xp)" strokeWidth="1.5" opacity="0.4"
                   className="avail-ring" />
               )}
@@ -219,39 +237,66 @@ function SkillTreeView({
                 strokeWidth={isSelected ? 2.5 : 1.5}
               />
 
-              {/* Level number */}
-              <text
-                x={cx} y={cy - (isMobile ? 5 : 6)}
-                textAnchor="middle" dominantBaseline="middle"
-                fill={nodeColor(level)}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: isMobile ? 8 : 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {node.name}
-              </text>
-              <text
-                x={cx} y={cy + (isMobile ? 8 : 10)}
-                textAnchor="middle" dominantBaseline="middle"
-                fill={nodeColor(level)}
-                style={{ fontFamily: "var(--font-mono)", fontSize: isMobile ? 8 : 10, opacity: 0.75 }}
-              >
-                {level >= MAX_LEVEL ? "MAX" : `Lv.${level}`}
-              </text>
+              {/* Lock icon for level 0 nodes */}
+              {level === 0 && (
+                <SvgLock x={cx} y={cy - (isMobile ? 3 : 4)} size={isMobile ? 14 : 16} color="rgba(255,255,255,0.25)" />
+              )}
+
+              {/* Skill name + level */}
+              {level > 0 && (
+                <>
+                  <text
+                    x={cx} y={cy - (isMobile ? 5 : 6)}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill={nodeColor(level)}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: isMobile ? 7 : 9,
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {node.name}
+                  </text>
+                  <text
+                    x={cx} y={cy + (isMobile ? 7 : 9)}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill={nodeColor(level)}
+                    style={{ fontFamily: "var(--font-mono)", fontSize: isMobile ? 7 : 9, opacity: 0.75 }}
+                  >
+                    {level >= MAX_LEVEL ? "MAX" : `Lv.${level}`}
+                  </text>
+                </>
+              )}
+
+              {/* Name label below node for locked nodes */}
+              {level === 0 && (
+                <text
+                  x={cx} y={cy + R + (isMobile ? 12 : 16)}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fill="var(--text-lo)"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: isMobile ? 7 : 8,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    opacity: 0.6,
+                  }}
+                >
+                  {node.name}
+                </text>
+              )}
 
               {/* Badge indicators */}
               {(hasSilver || hasGold) && (
                 <g>
                   {hasSilver && (
-                    <circle cx={cx + R - 6} cy={cy - R + 6} r={8}
+                    <circle cx={cx + R - 5} cy={cy - R + 5} r={7}
                       fill="#aaa" stroke="#fff" strokeWidth="1" opacity="0.9" />
                   )}
                   {hasGold && (
-                    <circle cx={cx + R - (hasSilver ? 18 : 6)} cy={cy - R + 6} r={8}
+                    <circle cx={cx + R - (hasSilver ? 16 : 5)} cy={cy - R + 5} r={7}
                       fill="var(--xp)" stroke="#fff" strokeWidth="1" opacity="0.9" />
                   )}
                 </g>
@@ -304,14 +349,14 @@ function NodeDetail({
 
       {/* Level display */}
       <div style={{ display: "flex", gap: 12 }}>
-        <div className="dg-item" style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", padding: "10px 14px" }}>
+        <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", padding: "10px 14px" }}>
           <span className="t-label">Nivel</span>
           <div style={{ fontFamily: "var(--font-sans)", fontSize: 24, fontWeight: 700, color: level >= MAX_LEVEL ? "var(--xp)" : "var(--text-hi)", marginTop: 2 }}>
             {level >= MAX_LEVEL ? "MAX" : level}
             <span style={{ fontSize: 12, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginLeft: 4 }}>/ {MAX_LEVEL}</span>
           </div>
         </div>
-        <div className="dg-item" style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", padding: "10px 14px" }}>
+        <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", padding: "10px 14px" }}>
           <span className="t-label">XP acumulada</span>
           <div style={{ fontFamily: "var(--font-sans)", fontSize: 24, fontWeight: 700, color: "var(--text-hi)", marginTop: 2 }}>
             {currentXp}
@@ -338,26 +383,32 @@ function NodeDetail({
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <span className="t-label">Insignias de habilidad</span>
 
-        {/* Silver */}
+        {/* Silver badge preview/status */}
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           background: hasSilver ? "rgba(170,170,170,0.08)" : "rgba(255,255,255,0.02)",
           border: `1px solid ${hasSilver ? "rgba(170,170,170,0.3)" : "var(--border)"}`,
           borderRadius: "var(--radius-md)", padding: "10px 14px",
-          opacity: hasSilver ? 1 : 0.5,
+          opacity: hasSilver ? 1 : 0.6,
         }}>
           <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: hasSilver ? "#aaa" : "rgba(255,255,255,0.05)",
-            border: "2px solid",
-            borderColor: hasSilver ? "#ccc" : "var(--border)",
+            width: 36, height: 36, borderRadius: "50%",
+            background: hasSilver
+              ? "linear-gradient(135deg, #C0C0C0, #8A8A8A)"
+              : "linear-gradient(135deg, rgba(192,192,192,0.15), rgba(138,138,138,0.08))",
+            border: `2px solid ${hasSilver ? "#ccc" : "rgba(255,255,255,0.1)"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, flexShrink: 0,
+            flexShrink: 0,
+            boxShadow: hasSilver ? "0 0 12px rgba(192,192,192,0.3)" : "none",
           }}>
-            {hasSilver ? "⬡" : "?"}
+            {hasSilver ? (
+              <span style={{ fontSize: 16, color: "#fff", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>⬡</span>
+            ) : (
+              <Icon name="lock" size={14} color="rgba(255,255,255,0.25)" />
+            )}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: hasSilver ? "#ccc" : "var(--text-lo)", fontFamily: "var(--font-sans)" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: hasSilver ? "#ddd" : "var(--text-lo)", fontFamily: "var(--font-sans)" }}>
               Insignia Plata
             </div>
             <div style={{ fontSize: 10, color: "var(--text-lo)", fontFamily: "var(--font-mono)", marginTop: 2 }}>
@@ -383,23 +434,29 @@ function NodeDetail({
           )}
         </div>
 
-        {/* Gold */}
+        {/* Gold badge preview/status */}
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           background: hasGold ? "var(--xp-lo)" : "rgba(255,255,255,0.02)",
           border: `1px solid ${hasGold ? "var(--xp-mid)" : "var(--border)"}`,
           borderRadius: "var(--radius-md)", padding: "10px 14px",
-          opacity: hasGold ? 1 : 0.5,
+          opacity: hasGold ? 1 : 0.6,
         }}>
           <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: hasGold ? "var(--xp-lo)" : "rgba(255,255,255,0.05)",
-            border: "2px solid",
-            borderColor: hasGold ? "var(--xp)" : "var(--border)",
+            width: 36, height: 36, borderRadius: "50%",
+            background: hasGold
+              ? "linear-gradient(135deg, #C4913A, #8B6914)"
+              : "linear-gradient(135deg, rgba(196,145,58,0.15), rgba(139,105,20,0.08))",
+            border: `2px solid ${hasGold ? "var(--xp)" : "rgba(196,145,58,0.15)"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, flexShrink: 0, color: hasGold ? "var(--xp)" : "var(--text-lo)",
+            flexShrink: 0,
+            boxShadow: hasGold ? "0 0 16px rgba(196,145,58,0.4)" : "none",
           }}>
-            {hasGold ? "★" : "?"}
+            {hasGold ? (
+              <span style={{ fontSize: 16, color: "#fff", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>★</span>
+            ) : (
+              <Icon name="lock" size={14} color="rgba(196,145,58,0.25)" />
+            )}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: hasGold ? "var(--xp)" : "var(--text-lo)", fontFamily: "var(--font-sans)" }}>
@@ -439,8 +496,14 @@ function NodeDetail({
         <div style={{
           fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600,
           color: level >= MAX_LEVEL ? "var(--xp)" : "var(--text-lo)", marginTop: 6,
+          display: "flex", alignItems: "center", gap: 6,
         }}>
-          {level >= MAX_LEVEL ? "✓ " : "🔒 "}{node.rewardLabel}
+          {level >= MAX_LEVEL ? (
+            <span style={{ color: "var(--success)" }}>✓</span>
+          ) : (
+            <Icon name="lock" size={12} color="var(--text-lo)" />
+          )}
+          {node.rewardLabel}
         </div>
       </div>
     </div>
@@ -492,32 +555,38 @@ function SkillBadgesView({
             const b = equippedBadges[i];
             return (
               <div key={i} style={{
-                flex: 1, minHeight: 72, borderRadius: "var(--radius-md)",
+                flex: 1, minHeight: 80, borderRadius: "var(--radius-md)",
                 border: `1px solid ${b ? (b.tier === "gold" ? "var(--xp-mid)" : "rgba(170,170,170,0.3)") : "var(--border)"}`,
                 background: b ? (b.tier === "gold" ? "var(--xp-lo)" : "rgba(170,170,170,0.06)") : "rgba(255,255,255,0.02)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
-                padding: 8,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: 10,
               }}>
                 {b ? (
                   <>
                     <div style={{
-                      width: 28, height: 28, borderRadius: "50%",
-                      background: b.tier === "gold" ? "var(--xp-lo)" : "rgba(170,170,170,0.15)",
-                      border: `2px solid ${b.tier === "gold" ? "var(--xp)" : "#aaa"}`,
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: b.tier === "gold"
+                        ? "linear-gradient(135deg, #C4913A, #8B6914)"
+                        : "linear-gradient(135deg, #C0C0C0, #8A8A8A)",
+                      border: `2px solid ${b.tier === "gold" ? "var(--xp)" : "#ccc"}`,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 13, color: b.tier === "gold" ? "var(--xp)" : "#ccc",
+                      fontSize: 14, color: "#fff",
+                      boxShadow: b.tier === "gold" ? "0 0 10px rgba(196,145,58,0.4)" : "0 0 8px rgba(192,192,192,0.25)",
                     }}>
                       {b.tier === "gold" ? "★" : "⬡"}
                     </div>
-                    <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--text-lo)", textAlign: "center", lineHeight: 1.3 }}>
+                    <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "var(--text-mid)", textAlign: "center", lineHeight: 1.3 }}>
                       {b.skillName}
                     </span>
-                    <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: b.tier === "gold" ? "var(--xp)" : "#aaa" }}>
+                    <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", fontWeight: 600, color: b.tier === "gold" ? "var(--xp)" : "#aaa" }}>
                       {b.tier === "gold" ? "ORO" : "PLATA"}
                     </span>
                   </>
                 ) : (
-                  <span style={{ fontSize: 10, color: "var(--text-lo)", fontFamily: "var(--font-mono)" }}>vacío</span>
+                  <>
+                    <Icon name="lock" size={16} color="var(--text-lo)" />
+                    <span style={{ fontSize: 9, color: "var(--text-lo)", fontFamily: "var(--font-mono)" }}>vacío</span>
+                  </>
                 )}
               </div>
             );
@@ -528,7 +597,8 @@ function SkillBadgesView({
       {/* All earned badges */}
       {earnedBadges.length === 0 ? (
         <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-lo)", fontFamily: "var(--font-mono)", fontSize: 12 }}>
-          Sube habilidades al Lv.5 o Lv.10 para ganar insignias
+          <Icon name="lock" size={24} color="var(--text-lo)" />
+          <p style={{ marginTop: 10 }}>Sube habilidades al Lv.5 o Lv.10 para ganar insignias</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -545,18 +615,21 @@ function SkillBadgesView({
               borderRadius: "var(--radius-md)", padding: "10px 14px",
             }}>
               <div style={{
-                width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-                background: b.tier === "gold" ? "var(--xp-lo)" : "rgba(170,170,170,0.1)",
-                border: `2px solid ${b.tier === "gold" ? "var(--xp)" : "#aaa"}`,
+                width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                background: b.tier === "gold"
+                  ? "linear-gradient(135deg, #C4913A, #8B6914)"
+                  : "linear-gradient(135deg, #C0C0C0, #8A8A8A)",
+                border: `2px solid ${b.tier === "gold" ? "var(--xp)" : "#ccc"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 14, color: b.tier === "gold" ? "var(--xp)" : "#ccc",
+                fontSize: 15, color: "#fff",
+                boxShadow: b.tier === "gold" ? "0 0 12px rgba(196,145,58,0.4)" : "0 0 8px rgba(192,192,192,0.25)",
               }}>
                 {b.tier === "gold" ? "★" : "⬡"}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{
                   fontSize: 12, fontWeight: 600,
-                  color: b.tier === "gold" ? "var(--xp)" : "#ccc",
+                  color: b.tier === "gold" ? "var(--xp)" : "#ddd",
                   fontFamily: "var(--font-sans)",
                 }}>
                   Insignia {b.tier === "gold" ? "Oro" : "Plata"} — {b.skillName}
@@ -594,25 +667,50 @@ function SkillBadgesView({
   );
 }
 
-/* ── Achievement Badges Tab ─────────────────── */
+/* ── Achievement Badges Tab (Logros) ────────── */
+
+const BADGE_ICONS_MAP: Record<string, string> = {
+  "streak7": "award", "streak30": "award", "first-goal": "target",
+  "habits-100": "repeat", "tasks-50": "check-square", "journal-30": "book",
+  "goals-5": "target", "habits-10": "zap",
+};
 
 function BadgesView({ badges }: { badges: AchievementBadge[] }) {
   return (
     <div className="badge-board">
-      {badges.map((b, i) => (
+      {badges.map((b) => (
         <TiltCard
           key={b.id}
           className={`badge-card ${b.unlocked ? "got" : "pending"}`}
           max={12}
           scale={1.04}
         >
-          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 6, minHeight: 130, alignItems: "flex-start" }}>
-            <div className="bc-icon">{b.unlocked ? BADGE_ICONS[i % BADGE_ICONS.length] : "?"}</div>
-            <span className="bc-name">{b.name}</span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-lo)", lineHeight: 1.5 }}>
+          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 8, minHeight: 140, alignItems: "flex-start" }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: "50%",
+              background: b.unlocked
+                ? "linear-gradient(135deg, var(--xp), rgba(196,145,58,0.6))"
+                : "rgba(255,255,255,0.04)",
+              border: `2px solid ${b.unlocked ? "var(--xp-mid)" : "var(--border)"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: b.unlocked ? "0 0 16px rgba(196,145,58,0.3)" : "none",
+            }}>
+              {b.unlocked ? (
+                <Icon name={BADGE_ICONS_MAP[b.id] ?? "award"} size={18} color="#fff" />
+              ) : (
+                <Icon name="lock" size={16} color="rgba(255,255,255,0.2)" />
+              )}
+            </div>
+            <span className="bc-name" style={{ fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: 13, color: b.unlocked ? "var(--text-hi)" : "var(--text-lo)" }}>
+              {b.name}
+            </span>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 10,
+              color: "var(--text-lo)", lineHeight: 1.5,
+            }}>
               {b.desc}
             </span>
-            <span className={`badge ${b.unlocked ? "badge-white" : "badge-dim"}`} style={{ marginTop: "auto" }}>
+            <span className={`badge ${b.unlocked ? "badge-xp" : "badge-dim"}`} style={{ marginTop: "auto" }}>
               {b.unlocked ? "Desbloqueado" : "Bloqueado"}
             </span>
           </div>
@@ -632,7 +730,18 @@ function RewardsView({ skills }: { skills: SkillProgress[] }) {
         const unlocked = (skill?.level ?? 0) >= MAX_LEVEL;
         return (
           <div key={node.id} className={`reward ${unlocked ? "owned" : ""}`}>
-            <div className="reward-icon">{unlocked ? "★" : "?"}</div>
+            <div style={{
+              width: 36, height: 36, borderRadius: "var(--radius-sm)",
+              background: unlocked ? "rgba(196,145,58,0.1)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${unlocked ? "var(--xp-mid)" : "var(--border)"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {unlocked ? (
+                <Icon name="star" size={16} color="var(--xp)" />
+              ) : (
+                <Icon name="lock" size={14} color="var(--text-lo)" />
+              )}
+            </div>
             <div style={{ flex: 1 }}>
               <div className="reward-name">{node.rewardLabel}</div>
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-lo)" }}>
@@ -669,7 +778,6 @@ export default function AchievementsPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleEquipToggle = useCallback(async (skillId: string, tier: "silver" | "gold", equipped: boolean) => {
-    // Optimistic update
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -696,10 +804,7 @@ export default function AchievementsPage() {
       body: JSON.stringify({ skillId, tier, equipped }),
     });
 
-    if (!res.ok) {
-      // Revert on error
-      loadData();
-    }
+    if (!res.ok) loadData();
   }, [loadData]);
 
   if (loading) {
@@ -718,7 +823,6 @@ export default function AchievementsPage() {
   const badges = data?.badges ?? [];
   const equippedBadges = data?.equippedBadges ?? [];
   const equippedCount = equippedBadges.length;
-
   const badgeCount = badges.filter((b) => b.unlocked).length;
   const skillBadgeCount = skills.reduce((n, s) =>
     n + (s.badges.silver ? 1 : 0) + (s.badges.gold ? 1 : 0), 0);
@@ -740,12 +844,13 @@ export default function AchievementsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="skill-tabs">
+      <div className="skill-tabs" style={{ overflowX: "auto" }}>
         {TABS.map((t) => (
           <button
             key={t.key}
             className={`stab ${tab === t.key ? "on" : ""}`}
             onClick={() => { setTab(t.key); setSelectedNode(null); }}
+            style={{ whiteSpace: "nowrap" }}
           >
             {t.label}
             {t.key === "skillbadges" && skillBadgeCount > 0 && (
@@ -760,7 +865,7 @@ export default function AchievementsPage() {
 
       {/* Skill Tree */}
       {tab === "tree" && (
-        <div className="skill-stage" style={isMobile ? { gridTemplateColumns: "1fr", minHeight: "auto" } : undefined}>
+        <div className="skill-stage" style={isMobile ? { gridTemplateColumns: "1fr", minHeight: "auto", gap: 14 } : undefined}>
           <SkillTreeView
             skills={skills}
             isMobile={isMobile}
