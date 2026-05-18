@@ -11,11 +11,15 @@ import { ClickRipple } from "@/src/components/ui/click-ripple";
 import { PageTransition } from "@/src/components/ui/page-transition";
 import { getLevelFromXP, getRankForLevel, NAV_ITEMS } from "@/src/lib/gamification";
 import { LumioLogo } from "@/src/components/ui/lumio-logo";
+import { ThemeProvider } from "@/src/components/theme-provider";
+import { isValidTheme } from "@/src/lib/theme";
+import type { ThemeSlots } from "@/src/lib/theme";
 
 interface UserProfile {
   totalXp: number;
   name: string | null;
   email: string;
+  themeColors?: ThemeSlots | null;
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -104,23 +108,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItem = NAV_ITEMS.find((n) => n.key === currentSection);
   const title = navItem?.label ?? "Lumio";
 
+  const serverTheme =
+    profile?.themeColors && isValidTheme(profile.themeColors)
+      ? (profile.themeColors as ThemeSlots)
+      : null;
+
   return (
-    <div className="home-root custom-cursor-active">
-      <CustomCursor />
-      <ClickRipple />
-      <Sidebar level={level} xpProgress={xpProgress} rankName={rank.name} />
-      <div className="main-area">
-        <Topbar
-          title={title}
-          level={level}
-          xpProgress={xpProgress}
-          totalXp={totalXp}
-        />
-        <div className="main-content" style={{ overflowY: "auto", overflowX: "hidden" }}>
-          <PageTransition>{children}</PageTransition>
+    <ThemeProvider serverTheme={serverTheme}>
+      <div className="home-root custom-cursor-active">
+        <CustomCursor />
+        <ClickRipple />
+        <Sidebar level={level} xpProgress={xpProgress} rankName={rank.name} />
+        <div className="main-area">
+          <Topbar
+            title={title}
+            level={level}
+            xpProgress={xpProgress}
+            totalXp={totalXp}
+          />
+          <div className="main-content" style={{ overflowY: "auto", overflowX: "hidden" }}>
+            <PageTransition>{children}</PageTransition>
+          </div>
         </div>
+        <MobileBottomNav />
       </div>
-      <MobileBottomNav />
-    </div>
+    </ThemeProvider>
   );
 }

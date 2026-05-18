@@ -20,6 +20,7 @@ export async function GET() {
       image: true,
       plan: true,
       totalXp: true,
+      themeColors: true,
       createdAt: true,
     },
   });
@@ -77,6 +78,7 @@ export async function GET() {
     createdAt: user.createdAt,
     isDeveloper,
     isDevPremium,
+    themeColors: user.themeColors ? JSON.parse(user.themeColors) : null,
   });
   } catch (e) { console.error("[GET /api/user/me]", e); return serverError(); }
 }

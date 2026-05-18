@@ -19,9 +19,10 @@ model User {
   name      String?
   image     String?
   plan      Plan     @default(FREE)
-  totalXp   Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  totalXp     Int      @default(0)
+  themeColors String?  // JSON: {"accent":"#E8E6DF","xp":"#C4913A","streak":"#D4622A","success":"#42A870","bgBase":"#090909"}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   accounts         Account[]
   sessions         Session[]

@@ -76,6 +76,16 @@ export const RedeemCodeSchema = z.object({
   code: z.string().min(1, "El codigo es obligatorio").max(30),
 });
 
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color hex invalido");
+
+export const UpdateThemeSchema = z.object({
+  accent: hexColor,
+  xp: hexColor,
+  streak: hexColor,
+  success: hexColor,
+  bgBase: hexColor,
+});
+
 export const SendOtpSchema = z.object({
   email: z.string().email(),
 });

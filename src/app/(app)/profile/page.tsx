@@ -6,6 +6,7 @@ import { XPRing } from "@/src/components/ui/xp-ring";
 import { Icon } from "@/src/components/ui/icons";
 import { Modal } from "@/src/components/ui/modal";
 import { useIsMobile } from "@/src/hooks/use-mobile";
+import { ThemeCustomizer } from "@/src/components/theme-customizer";
 
 interface RankInfo {
   name: string;
@@ -511,6 +512,14 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Color Customization */}
+      <div>
+        <span className="t-label" style={{ marginBottom: 12, display: "block" }}>
+          Personalizar colores
+        </span>
+        <ThemeCustomizer isPremium={profile.plan === "PREMIUM" || !!profile.isDeveloper || !!profile.isDevPremium} />
       </div>
 
       {/* XP History */}
